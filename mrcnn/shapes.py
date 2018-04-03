@@ -14,8 +14,8 @@ import random
 import numpy as np
 import cv2
 
-from config import Config
-import utils
+from mrcnn.config import Config
+from mrcnn import utils
 
 
 class ShapesConfig(Config):
