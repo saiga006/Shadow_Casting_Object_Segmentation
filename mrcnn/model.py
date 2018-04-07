@@ -8,14 +8,10 @@ Written by Waleed Abdulla
 """
 
 import os
-import sys
-import glob
 import random
-import math
 import datetime
-import itertools
-import json
 import re
+import math
 import logging
 from collections import OrderedDict
 import multiprocessing
@@ -25,11 +21,10 @@ import tensorflow as tf
 import keras
 import keras.backend as K
 import keras.layers as KL
-import keras.initializers as KI
 import keras.engine as KE
 import keras.models as KM
 
-import utils
+from mrcnn import utils
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
@@ -2039,7 +2034,7 @@ class MaskRCNN():
 
         # Add multi-GPU support.
         if config.GPU_COUNT > 1:
-            from parallel_model import ParallelModel
+            from mrcnn.parallel_model import ParallelModel
             model = ParallelModel(model, config.GPU_COUNT)
 
         return model
