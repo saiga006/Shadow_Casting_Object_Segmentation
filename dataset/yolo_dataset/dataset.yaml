@@ -1,0 +1,5 @@
+train: /home/kai/Documents/Hackathon-Bonn/yolo_dataset/train/images
+val: /home/kai/Documents/Hackathon-Bonn/yolo_dataset/valid/images
+
+nc: 1
+names: ['klasse']
