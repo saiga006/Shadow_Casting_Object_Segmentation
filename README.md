@@ -39,15 +39,27 @@ conda activate dlrv
 
 Images and their corresponding label files are organized for training.
 
-### Training 🏋️‍♂️
+<!--### Training YOLO🏋️‍♂️
 
 ```bash
 python train.py --data dataset/yolo_dataset --epochs 50 --batch-size 16
-```
-### Inference 🔍
+```-->
+<!--### Inference 🔍
 ```bash
 python inference.py --weights best_model.pth --image path/to/image.jpg
+```-->
+
+### Training UNet 🏋️‍♂️
+```bash
+python src/train_unet.py
 ```
+🧪 Notes for U-Net
+- U-Net uses 2 classes: background (0) and shadow-casting object (1).
+- Input images and masks are resized to 512×512 during training.
+<!--### Inference 🔍
+```bash
+python inference_unet.py --weights best_model.pth --image path/to/image.jpg
+```-->
 
 ---
 
