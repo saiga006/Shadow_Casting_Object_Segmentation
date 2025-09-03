@@ -1,6 +1,7 @@
 import os
 import cv2
 import torch
+import logging
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
@@ -9,9 +10,12 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 # --- Config ---
-IMAGE_DIR = '../dataset/unet_dataset/images/'
+IMAGE_DIR = os.path.join("dataset", "unet_dataset", "images")
+MASK_DIR = os.path.join("dataset", "unet_dataset", "masks", "train")
+OUTPUT_DIR = os.path.join("outputs")
 
-MASK_DIR = '../dataset/unet_dataset/masks/train/'
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 BATCH_SIZE = 4
 NUM_EPOCHS = 20
 LR = 1e-4
@@ -19,6 +23,21 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ENCODER = 'resnet34'
 CLASSES = 2
 IMG_SIZE = (512, 512)
+
+log_dir = os.path.join(OUTPUT_DIR, "logs")
+os.makedirs(log_dir, exist_ok=True)
+
+logging.basicConfig(
+    filename=os.path.join(log_dir, "training.log"),
+    filemode="w",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+logging.getLogger().addHandler(console)
+
 
 # --- Dataset ---
 class SegmentationDataset(Dataset):
@@ -111,21 +130,23 @@ train_losses = []
 val_ious = []
 
 for epoch in range(NUM_EPOCHS):
-    print(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+    logging.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
     train_loss = train_epoch(train_loader, model, optimizer, loss_fn)
     val_iou = evaluate(val_loader, model)
 
     train_losses.append(train_loss)
     val_ious.append(val_iou)
 
-    print(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f}")
+    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f}")
 
 # --- Save Model ---
-torch.save(model.state_dict(), '../dataset/unet_dataset/Output/unet_model.pth')
+
+torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
+
 
 # --- Plot ---
 plt.plot(train_losses, label='Train Loss')
 plt.plot(val_ious, label='Val IoU')
 plt.legend()
 plt.title('Training Curve')
-plt.savefig('../dataset/unet_dataset/Output/training_plot.png')
+plt.savefig(os.path.join(OUTPUT_DIR, "plots", "training_plot.png"))
