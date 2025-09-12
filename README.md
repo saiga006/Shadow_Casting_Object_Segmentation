@@ -1,18 +1,20 @@
-# Shadow Casting Object Segmentation 🌑🖼️
+# 🌍 PrithviVision
 
 ## Overview 🎯
+**PrithviVision** is a deep learning project for **shadow-casting object segmentation in aerial imagery**.
+The goal is to detect and segment objects affected by shadows — a common challenge in remote sensing and urban scene understanding.
 
-This repository contains code and datasets related to **shadow casting object segmentation**. The project focuses on detecting and segmenting objects in images affected by shadows, a challenging task in computer vision due to the complex interaction between objects and shadow patterns.
+The project combines **U-Net, YOLO, and Mask R-CNN** approaches to handle both **object detection** and **pixel-level segmentation**. The dataset is curated from **aerial images of Bonn city**, annotated in **YOLO format**.
 
-The dataset included follows the YOLO format for object detection training. The segmentation approach aims to improve accuracy in scenarios with significant shadow effects.
-
-
+---
 
 ## Features ✨
+- 📂 **YOLO-format dataset** prepared for aerial shadow segmentation.
+- 🧠 **Multiple models supported** – U-Net, YOLO, Mask R-CNN.
+- 🛠️ **Preprocessing & annotation utilities** for dataset preparation.
+- ⚡ Modular training and inference scripts.
 
-- 📂 Dataset prepared in YOLO format for shadow-affected object segmentation.
-- 🛠️ Scripts and models for training and inference.
-- 🔧 Tools for preprocessing and annotation support.
+---
 
 ## Installation ⚙️
 
@@ -20,7 +22,7 @@ The dataset included follows the YOLO format for object detection training. The 
 
 ```bash
 git clone https://github.com/ItsShriks/Shadow_Casting_Object_Segmentation.git
-cd Shadow_Casting_Object_Segmentation
+cd PrithviVision
 ```
 2. Create a conda environment with required dependencies:
 ```bash
@@ -56,16 +58,19 @@ python src/train_unet.py
 🧪 Notes for U-Net
 - U-Net uses 2 classes: background (0) and shadow-casting object (1).
 - Input images and masks are resized to 512×512 during training.
-<!--### Inference 🔍
+### Inference 🔍
 ```bash
-python inference_unet.py --weights best_model.pth --image path/to/image.jpg
-```-->
+python inference_unet.py
+```
+
+<!--### Training Mask R-CNN (Optional) 🖼️-->
 
 ---
 
 ## Contributing 🤝
 
-Feel free to open issues or submit pull requests for improvements and bug fixes.
+Contributions are welcome!
+Open issues or submit pull requests to improve PrithviVision.
 
 ---
 
