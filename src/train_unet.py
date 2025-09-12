@@ -1,6 +1,7 @@
 import os
 import cv2
 import torch
+import time
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -15,15 +16,18 @@ MASK_DIR = os.path.join("dataset", "unet_dataset", "masks", "train")
 OUTPUT_DIR = os.path.join("outputs")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(os.path.join(OUTPUT_DIR, "models"), exist_ok=True)
+os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
 
 BATCH_SIZE = 4
-NUM_EPOCHS = 20
+NUM_EPOCHS = 1
 LR = 1e-4
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ENCODER = 'resnet34'
 CLASSES = 2
 IMG_SIZE = (512, 512)
 
+# Logging
 log_dir = os.path.join(OUTPUT_DIR, "logs")
 os.makedirs(log_dir, exist_ok=True)
 
@@ -37,7 +41,6 @@ logging.basicConfig(
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 logging.getLogger().addHandler(console)
-
 
 # --- Dataset ---
 class SegmentationDataset(Dataset):
@@ -89,13 +92,19 @@ model = smp.Unet(
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
+# --- GPU Memory Logger ---
+def log_gpu_memory():
+    if torch.cuda.is_available():
+        mem_alloc = torch.cuda.memory_allocated() / (1024 ** 2)
+        mem_reserved = torch.cuda.memory_reserved() / (1024 ** 2)
+        logging.info(f"GPU Memory Allocated: {mem_alloc:.2f} MB | Reserved: {mem_reserved:.2f} MB")
+
 # --- Training ---
 def train_epoch(loader, model, optimizer, loss_fn):
     model.train()
     epoch_loss = 0
     for images, masks in tqdm(loader):
-        images = images.to(DEVICE)
-        masks = masks.to(DEVICE)
+        images, masks = images.to(DEVICE), masks.to(DEVICE)
 
         optimizer.zero_grad()
         outputs = model(images)
@@ -105,48 +114,85 @@ def train_epoch(loader, model, optimizer, loss_fn):
         epoch_loss += loss.item()
     return epoch_loss / len(loader)
 
-# --- Validation ---
-def evaluate(loader, model):
+# --- Evaluation (IoU + F1) ---
+def evaluate(loader, model, num_classes=2):
     model.eval()
-    ious = []
+    ious, f1s = [], []
     with torch.no_grad():
         for images, masks in loader:
-            images = images.to(DEVICE)
-            masks = masks.to(DEVICE)
+            images, masks = images.to(DEVICE), masks.to(DEVICE)
             outputs = model(images)
             preds = torch.argmax(outputs, dim=1)
 
-            intersection = ((preds == 1) & (masks == 1)).sum().item()
-            union = ((preds == 1) | (masks == 1)).sum().item()
-            if union == 0:
-                iou = 1.0
-            else:
-                iou = intersection / union
-            ious.append(iou)
-    return np.mean(ious)
+            for cls in range(1, num_classes):  # skip background (0)
+                tp = ((preds == cls) & (masks == cls)).sum().item()
+                fp = ((preds == cls) & (masks != cls)).sum().item()
+                fn = ((preds != cls) & (masks == cls)).sum().item()
+                union = ((preds == cls) | (masks == cls)).sum().item()
+
+                iou = tp / union if union > 0 else 1.0
+                precision = tp / (tp + fp + 1e-7)
+                recall = tp / (tp + fn + 1e-7)
+                f1 = 2 * precision * recall / (precision + recall + 1e-7)
+
+                ious.append(iou)
+                f1s.append(f1)
+    return np.mean(ious), np.mean(f1s)
+
+# --- Inference Time ---
+def measure_inference_time(model, loader, device, n_warmup=5):
+    model.eval()
+    times = []
+    with torch.no_grad():
+        # Warm-up
+        for _ in range(n_warmup):
+            for images, _ in loader:
+                images = images.to(device)
+                _ = model(images)
+                break
+        # Actual timing
+        for images, _ in loader:
+            images = images.to(device)
+            start = time.time()
+            _ = model(images)
+            torch.cuda.synchronize() if torch.cuda.is_available() else None
+            end = time.time()
+            times.append(end - start)
+    return np.mean(times), np.std(times)
 
 # --- Loop ---
-train_losses = []
-val_ious = []
+train_losses, val_ious, val_f1s, epoch_times = [], [], [], []
 
 for epoch in range(NUM_EPOCHS):
+    start_time = time.time()
     logging.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+
     train_loss = train_epoch(train_loader, model, optimizer, loss_fn)
-    val_iou = evaluate(val_loader, model)
+    val_iou, val_f1 = evaluate(val_loader, model)
+    end_time = time.time()
+    epoch_time = end_time - start_time
+
+    log_gpu_memory()
 
     train_losses.append(train_loss)
     val_ious.append(val_iou)
+    val_f1s.append(val_f1)
+    epoch_times.append(epoch_time)
 
-    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f}")
+    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f} | Val F1: {val_f1:.4f} | Time: {epoch_time:.2f}s")
 
 # --- Save Model ---
-
 torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
 
+# --- Inference Speed ---
+avg_inf, std_inf = measure_inference_time(model, val_loader, DEVICE)
+logging.info(f"Inference time per batch: {avg_inf:.4f} ± {std_inf:.4f} sec")
 
-# --- Plot ---
+# --- Plots ---
+plt.figure()
 plt.plot(train_losses, label='Train Loss')
 plt.plot(val_ious, label='Val IoU')
+plt.plot(val_f1s, label='Val F1')
 plt.legend()
-plt.title('Training Curve')
-plt.savefig(os.path.join(OUTPUT_DIR, "plots", "training_plot.png"))
+plt.title('Training Metrics')
+plt.savefig(os.path.join(OUTPUT_DIR, "plots", "metrics_plot.png"))
