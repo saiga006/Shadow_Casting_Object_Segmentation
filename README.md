@@ -1,16 +1,19 @@
-# Shadow Casting Object Segmentation 🌑🖼️
+# 🌍 Shadow Casting Object Aerial Segmentation
 
 ## Overview 🎯
 
-This repository contains code and datasets related to shadow casting object segmentation. The project focuses on detecting and segmenting objects in images affected by shadows, a challenging task in computer vision due to the complex interaction between objects and shadow patterns.
+This repository contains code and datasets related to shadow casting object segmentation. The project focuses on detecting and segmenting objects in images affected by shadows, a challenging task in remote sensing and urban scene understanding. The segmentation approach aims to improve accuracy in scenarios with significant shadow effects.
 
-The dataset included follows the YOLO format for object detection training. The segmentation approach aims to improve accuracy in scenarios with significant shadow effects.
+The project combines **U-Net, YOLO, and Mask R-CNN** approaches to handle both **object detection** and **pixel-level segmentation**. The dataset is curated from **aerial images of Bonn city**, annotated in **YOLO format**.
+
 
 ## Features ✨
+- 📂 **YOLO-format dataset** prepared for aerial shadow segmentation.
+- 🧠 **Multiple models supported** – U-Net, YOLO, Mask R-CNN.
+- 🛠️ **Preprocessing & annotation utilities** for dataset preparation.
+- ⚡ Modular training and inference scripts.
 
-- 📂 Dataset prepared in YOLO format for shadow-affected object segmentation.
-- 🛠️ Scripts and models for training and inference.
-- 🔧 Tools for preprocessing and annotation support.
+---
 
 ## Authors ✍️
 

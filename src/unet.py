@@ -1,21 +1,23 @@
 import os
 import cv2
 import torch
+import time
 import logging
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 import segmentation_models_pytorch as smp
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import argparse
 
 # --- Argument parser ---
 parser = argparse.ArgumentParser(description="Train UNet for Shadow-Casting Object Segmentation")
-parser.add_argument("--image_dir", type=str, default="dataset/images", help="Path to input images")
-parser.add_argument("--mask_dir", type=str, default="dataset/masks", help="Path to masks")
+parser.add_argument("--image_dir", type=str, default="dataset/unet_dataset/images", help="Path to input images")
+parser.add_argument("--mask_dir", type=str, default="dataset/unet_dataset/masks/train", help="Path to masks")
 parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save models and plots")
 parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training")
-parser.add_argument("--num_epochs", type=int, default=20, help="Number of training epochs")
+parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs")
 args = parser.parse_args()
 
 IMAGE_DIR = args.image_dir
@@ -31,13 +33,23 @@ ENCODER = 'resnet34'
 CLASSES = 2
 IMG_SIZE = (512, 512)
 
-# Create directories
+# --- Create directories ---
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, "models"), exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
+log_dir = os.path.join(OUTPUT_DIR, "logs")
+os.makedirs(log_dir, exist_ok=True)
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+# --- Logging ---
+logging.basicConfig(
+    filename=os.path.join(log_dir, "training.log"),
+    filemode="w",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+logging.getLogger().addHandler(console)
 
 # --- Dataset ---
 class SegmentationDataset(Dataset):
@@ -62,7 +74,7 @@ class SegmentationDataset(Dataset):
 
         return torch.tensor(image), torch.tensor(mask)
 
-# --- File paths ---
+# --- Collect file paths ---
 image_files = sorted([f for f in os.listdir(IMAGE_DIR) if f.endswith(('.jpg', '.png'))])
 mask_files = sorted([f for f in os.listdir(MASK_DIR) if f.endswith('.png')])
 
@@ -87,6 +99,13 @@ model = smp.Unet(
 
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+# --- GPU Memory Logger ---
+def log_gpu_memory():
+    if torch.cuda.is_available():
+        mem_alloc = torch.cuda.memory_allocated() / (1024 ** 2)
+        mem_reserved = torch.cuda.memory_reserved() / (1024 ** 2)
+        logging.info(f"GPU Memory Allocated: {mem_alloc:.2f} MB | Reserved: {mem_reserved:.2f} MB")
 
 # --- Training ---
 def train_epoch(loader, model, optimizer, loss_fn):
@@ -113,7 +132,7 @@ def evaluate(loader, model, num_classes=2):
             outputs = model(images)
             preds = torch.argmax(outputs, dim=1)
 
-            for cls in range(1, num_classes):
+            for cls in range(1, num_classes):  # skip background (0)
                 tp = ((preds == cls) & (masks == cls)).sum().item()
                 fp = ((preds == cls) & (masks != cls)).sum().item()
                 fn = ((preds != cls) & (masks == cls)).sum().item()
@@ -125,15 +144,63 @@ def evaluate(loader, model, num_classes=2):
                 f1 = 2 * precision * recall / (precision + recall + 1e-7)
 
                 ious.append(iou)
-                f1s.append(f1)
+                f1s.append(f1s)
     return np.mean(ious), np.mean(f1s)
 
+# --- Inference Time ---
+def measure_inference_time(model, loader, device, n_warmup=5):
+    model.eval()
+    times = []
+    with torch.no_grad():
+        # Warm-up
+        for _ in range(n_warmup):
+            for images, _ in loader:
+                images = images.to(device)
+                _ = model(images)
+                break
+        # Actual timing
+        for images, _ in loader:
+            images = images.to(device)
+            start = time.time()
+            _ = model(images)
+            torch.cuda.synchronize() if torch.cuda.is_available() else None
+            end = time.time()
+            times.append(end - start)
+    return np.mean(times), np.std(times)
+
 # --- Training Loop ---
+train_losses, val_ious, val_f1s, epoch_times = [], [], [], []
+
 for epoch in range(NUM_EPOCHS):
+    start_time = time.time()
     logging.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+
     train_loss = train_epoch(train_loader, model, optimizer, loss_fn)
     val_iou, val_f1 = evaluate(val_loader, model)
-    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f} | Val F1: {val_f1:.4f}")
+    end_time = time.time()
+    epoch_time = end_time - start_time
+
+    log_gpu_memory()
+
+    train_losses.append(train_loss)
+    val_ious.append(val_iou)
+    val_f1s.append(val_f1)
+    epoch_times.append(epoch_time)
+
+    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f} | Val F1: {val_f1:.4f} | Time: {epoch_time:.2f}s")
 
 # --- Save Model ---
 torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
+
+# --- Inference Speed ---
+avg_inf, std_inf = measure_inference_time(model, val_loader, DEVICE)
+logging.info(f"Inference time per batch: {avg_inf:.4f} ± {std_inf:.4f} sec")
+
+# --- Plots ---
+plt.figure()
+plt.plot(train_losses, label='Train Loss')
+plt.plot(val_ious, label='Val IoU')
+plt.plot(val_f1s, label='Val F1')
+plt.legend()
+plt.title('Training Metrics')
+plt.savefig(os.path.join(OUTPUT_DIR, "plots", "metrics_plot.png"))
