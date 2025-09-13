@@ -54,7 +54,7 @@ if __name__ == "__main__":
         in_channels=3,
         classes=CLASSES
     ).to(DEVICE)
-    model.load_state_dict(torch.load(args.model, map_location=DEVICE))
+    model.load_state_dict(torch.load(args.weights, map_location=DEVICE))
     model.eval()
 
     # Run inference
