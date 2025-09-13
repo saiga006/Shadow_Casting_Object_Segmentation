@@ -8,9 +8,15 @@ from torch.utils.data import Dataset, DataLoader
 import segmentation_models_pytorch as smp
 from sklearn.model_selection import train_test_split
 import argparse
+import matplotlib.pyplot as plt
+import time
+
 
 # --- Argument parser ---
-parser = argparse.ArgumentParser(description="Train UNet for Shadow-Casting Object Segmentation")
+parser = argparse.ArgumentParser(
+    description="Train UNet for Shadow-Casting Object Segmentation",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
 parser.add_argument("--image_dir", type=str, default="dataset/unet_dataset/images", help="Path to input images")
 parser.add_argument("--mask_dir", type=str, default="dataset/unet_dataset/masks/train", help="Path to masks")
 parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save models and plots")
@@ -35,9 +41,22 @@ IMG_SIZE = (512, 512)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, "models"), exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
+os.makedirs(os.path.join(OUTPUT_DIR, "logs"), exist_ok=True)
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+# Logging (console + file)
+log_file = os.path.join(OUTPUT_DIR, "logs", "training.log")
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.handlers = []  # clear old handlers
+
+file_handler = logging.FileHandler(log_file, mode="w")
+file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+logger.addHandler(console_handler)
 
 # --- Dataset ---
 class SegmentationDataset(Dataset):
@@ -63,13 +82,21 @@ class SegmentationDataset(Dataset):
         return torch.tensor(image), torch.tensor(mask)
 
 # --- File paths ---
-image_files = sorted([f for f in os.listdir(IMAGE_DIR) if f.endswith(('.jpg', '.png'))])
-mask_files = sorted([f for f in os.listdir(MASK_DIR) if f.endswith('.png')])
+image_files = sorted([f for f in os.listdir(IMAGE_DIR) if f.lower().endswith(('.jpg', '.png', '.jpeg', '.tif'))])
+mask_files = sorted([f for f in os.listdir(MASK_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tif'))])
+
+if len(image_files) == 0 or len(mask_files) == 0:
+    raise FileNotFoundError(f"No images or masks found in {IMAGE_DIR} or {MASK_DIR}")
+
+if len(image_files) != len(mask_files):
+    logger.warning(f"⚠️ Number of images ({len(image_files)}) and masks ({len(mask_files)}) differ!")
 
 image_paths = [os.path.join(IMAGE_DIR, f) for f in image_files]
 mask_paths = [os.path.join(MASK_DIR, f) for f in mask_files]
 
-train_imgs, val_imgs, train_masks, val_masks = train_test_split(image_paths, mask_paths, test_size=0.2, random_state=42)
+train_imgs, val_imgs, train_masks, val_masks = train_test_split(
+    image_paths, mask_paths, test_size=0.2, random_state=42
+)
 
 train_ds = SegmentationDataset(train_imgs, train_masks, IMG_SIZE)
 val_ds = SegmentationDataset(val_imgs, val_masks, IMG_SIZE)
@@ -113,7 +140,7 @@ def evaluate(loader, model, num_classes=2):
             outputs = model(images)
             preds = torch.argmax(outputs, dim=1)
 
-            for cls in range(1, num_classes):
+            for cls in range(1, num_classes):  # skip background
                 tp = ((preds == cls) & (masks == cls)).sum().item()
                 fp = ((preds == cls) & (masks != cls)).sum().item()
                 fn = ((preds != cls) & (masks == cls)).sum().item()
@@ -129,16 +156,49 @@ def evaluate(loader, model, num_classes=2):
     return np.mean(ious), np.mean(f1s)
 
 # --- Training Loop ---
+def log_system_info(logger):
+    import platform, psutil, torch
+
+    logger.info(f"OS: {platform.system()} {platform.release()}")
+    logger.info(f"Processor: {platform.processor()}")
+    logger.info(f"CPU Cores: {psutil.cpu_count(logical=False)} | Logical CPUs: {psutil.cpu_count(logical=True)}")
+    logger.info(f"RAM: {round(psutil.virtual_memory().total / 1024**3, 2)} GB")
+
+    if torch.cuda.is_available():
+        logger.info(f"GPU: {torch.cuda.get_device_name(0)} | CUDA {torch.version.cuda}")
+        logger.info(f"GPU Memory: {round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2)} GB")
+    else:
+        logger.info("Running on CPU only")
+
+log_system_info(logger)
+
+train_losses, val_ious, val_f1s, epoch_times = [], [], [], []
+
 for epoch in range(NUM_EPOCHS):
-    logging.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+    start_time = time.time()
+    logger.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+
     train_loss = train_epoch(train_loader, model, optimizer, loss_fn)
     val_iou, val_f1 = evaluate(val_loader, model)
-    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f} | Val F1: {val_f1:.4f}")
 
+    end_time = time.time()
+    epoch_time = end_time - start_time
+
+    train_losses.append(train_loss)
+    val_ious.append(val_iou)
+    val_f1s.append(val_f1)
+    epoch_times.append(epoch_time)
+
+    logger.info(
+        f"Train Loss: {train_loss:.4f} | "
+        f"Val IoU: {val_iou:.4f} | "
+        f"Val F1: {val_f1:.4f} | "
+        f"Epoch Time: {epoch_time:.2f} sec"
+    )
 # --- Save Model ---
 torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
 
-# --- Save Training Metrics ---
+# --- Save Plots ---
 plt.figure()
 plt.plot(train_losses, label="Train Loss")
 plt.plot(val_ious, label="Val IoU")
