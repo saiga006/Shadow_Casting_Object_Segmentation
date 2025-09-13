@@ -14,7 +14,7 @@ import time
 
 # --- Argument parser ---
 parser = argparse.ArgumentParser(
-    description="Train UNet for Shadow-Casting Object Segmentation",
+    description="Train UNet for Shadow-Casting-Object Segmentation",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument("--image_dir", type=str, default="dataset/unet_dataset/images", help="Path to input images")
@@ -69,17 +69,24 @@ class SegmentationDataset(Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
+        # Load image
         image = cv2.imread(self.image_paths[idx])
+        if image is None:
+            raise ValueError(f"Image not found: {self.image_paths[idx]}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, self.size)
         image = image / 255.0
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
 
+        # Load mask
         mask = cv2.imread(self.mask_paths[idx], cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            raise ValueError(f"Mask not found: {self.mask_paths[idx]}")
         mask = cv2.resize(mask, self.size, interpolation=cv2.INTER_NEAREST)
         mask = mask.astype(np.int64)
 
         return torch.tensor(image), torch.tensor(mask)
+
 
 # --- File paths ---
 image_files = sorted([f for f in os.listdir(IMAGE_DIR) if f.lower().endswith(('.jpg', '.png', '.jpeg', '.tif'))])
@@ -165,8 +172,10 @@ def log_system_info(logger):
     logger.info(f"RAM: {round(psutil.virtual_memory().total / 1024**3, 2)} GB")
 
     if torch.cuda.is_available():
-        logger.info(f"GPU: {torch.cuda.get_device_name(0)} | CUDA {torch.version.cuda}")
-        logger.info(f"GPU Memory: {round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2)} GB")
+        cuda_version = getattr(torch, "cuda", "Unknown")
+        logger.info(f"GPU: {torch.cuda.get_device_name(0)} | CUDA {cuda_version}")
+        gpu_mem = round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2)
+        logger.info(f"GPU Memory: {gpu_mem} GB")
     else:
         logger.info("Running on CPU only")
 

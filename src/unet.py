@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 import argparse
 
 # --- Argument parser ---
-parser = argparse.ArgumentParser(description="Train UNet for Shadow-Casting Object Segmentation")
+parser = argparse.ArgumentParser(description="UNet Inference for Shadow-Casting Objects", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--image_dir", type=str, default="dataset/unet_dataset/images", help="Path to input images")
 parser.add_argument("--mask_dir", type=str, default="dataset/unet_dataset/masks/train", help="Path to masks")
 parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save models and plots")
@@ -40,16 +40,20 @@ os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
 log_dir = os.path.join(OUTPUT_DIR, "logs")
 os.makedirs(log_dir, exist_ok=True)
 
-# --- Logging ---
-logging.basicConfig(
-    filename=os.path.join(log_dir, "training.log"),
-    filemode="w",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-logging.getLogger().addHandler(console)
+# Logging (console + file)
+log_file = os.path.join(OUTPUT_DIR, "logs", "training.log")
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.handlers = []  # clear old handlers
+
+file_handler = logging.FileHandler(log_file, mode="w")
+file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+logger.addHandler(console_handler)
 
 # --- Dataset ---
 class SegmentationDataset(Dataset):
@@ -63,12 +67,17 @@ class SegmentationDataset(Dataset):
 
     def __getitem__(self, idx):
         image = cv2.imread(self.image_paths[idx])
+        if image is None:
+            raise ValueError(f"Image not found: {self.image_paths[idx]}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, self.size)
         image = image / 255.0
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
 
         mask = cv2.imread(self.mask_paths[idx], cv2.IMREAD_GRAYSCALE)
+        mask = cv2.imread(self.mask_paths[idx], cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            raise ValueError(f"Mask not found: {self.mask_paths[idx]}")
         mask = cv2.resize(mask, self.size, interpolation=cv2.INTER_NEAREST)
         mask = mask.astype(np.int64)
 
@@ -147,6 +156,22 @@ def evaluate(loader, model, num_classes=2):
                 f1s.append(f1s)
     return np.mean(ious), np.mean(f1s)
 
+def log_system_info(logger):
+    import platform, psutil, torch
+
+    logger.info(f"OS: {platform.system()} {platform.release()}")
+    logger.info(f"Processor: {platform.processor()}")
+    logger.info(f"CPU Cores: {psutil.cpu_count(logical=False)} | Logical CPUs: {psutil.cpu_count(logical=True)}")
+    logger.info(f"RAM: {round(psutil.virtual_memory().total / 1024**3, 2)} GB")
+
+    if torch.cuda.is_available():
+        cuda_version = getattr(torch, "cuda", "Unknown")
+        logger.info(f"GPU: {torch.cuda.get_device_name(0)} | CUDA {cuda_version}")
+        gpu_mem = round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2)
+        logger.info(f"GPU Memory: {gpu_mem} GB")
+    else:
+        logger.info("Running on CPU only")
+
 # --- Inference Time ---
 def measure_inference_time(model, loader, device, n_warmup=5):
     model.eval()
@@ -168,27 +193,31 @@ def measure_inference_time(model, loader, device, n_warmup=5):
             times.append(end - start)
     return np.mean(times), np.std(times)
 
+log_system_info(logger)
 # --- Training Loop ---
 train_losses, val_ious, val_f1s, epoch_times = [], [], [], []
 
 for epoch in range(NUM_EPOCHS):
     start_time = time.time()
-    logging.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
+    logger.info(f"Epoch {epoch+1}/{NUM_EPOCHS}")
 
     train_loss = train_epoch(train_loader, model, optimizer, loss_fn)
     val_iou, val_f1 = evaluate(val_loader, model)
+
     end_time = time.time()
     epoch_time = end_time - start_time
-
-    log_gpu_memory()
 
     train_losses.append(train_loss)
     val_ious.append(val_iou)
     val_f1s.append(val_f1)
     epoch_times.append(epoch_time)
 
-    logging.info(f"Train Loss: {train_loss:.4f} | Val IoU: {val_iou:.4f} | Val F1: {val_f1:.4f} | Time: {epoch_time:.2f}s")
-
+    logger.info(
+        f"Train Loss: {train_loss:.4f} | "
+        f"Val IoU: {val_iou:.4f} | "
+        f"Val F1: {val_f1:.4f} | "
+        f"Epoch Time: {epoch_time:.2f} sec"
+    )
 # --- Save Model ---
 torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
 
@@ -198,9 +227,11 @@ logging.info(f"Inference time per batch: {avg_inf:.4f} ± {std_inf:.4f} sec")
 
 # --- Plots ---
 plt.figure()
-plt.plot(train_losses, label='Train Loss')
-plt.plot(val_ious, label='Val IoU')
-plt.plot(val_f1s, label='Val F1')
+plt.plot(train_losses, label="Train Loss")
+plt.plot(val_ious, label="Val IoU")
+plt.plot(val_f1s, label="Val F1")
+plt.xlabel("Epochs")
+plt.title("Training Metrics")
 plt.legend()
-plt.title('Training Metrics')
-plt.savefig(os.path.join(OUTPUT_DIR, "plots", "metrics_plot.png"))
+plt.savefig(os.path.join(OUTPUT_DIR, "plots", "training_metrics.png"))
+plt.close()
