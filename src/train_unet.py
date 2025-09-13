@@ -11,8 +11,8 @@ import argparse
 
 # --- Argument parser ---
 parser = argparse.ArgumentParser(description="Train UNet for Shadow-Casting Object Segmentation")
-parser.add_argument("--image_dir", type=str, default="dataset/images", help="Path to input images")
-parser.add_argument("--mask_dir", type=str, default="dataset/masks", help="Path to masks")
+parser.add_argument("--image_dir", type=str, default="dataset/unet_dataset/images", help="Path to input images")
+parser.add_argument("--mask_dir", type=str, default="dataset/unet_dataset/masks/train", help="Path to masks")
 parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save models and plots")
 parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training")
 parser.add_argument("--num_epochs", type=int, default=20, help="Number of training epochs")
@@ -137,3 +137,14 @@ for epoch in range(NUM_EPOCHS):
 
 # --- Save Model ---
 torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "models", "unet_model.pth"))
+
+# --- Save Training Metrics ---
+plt.figure()
+plt.plot(train_losses, label="Train Loss")
+plt.plot(val_ious, label="Val IoU")
+plt.plot(val_f1s, label="Val F1")
+plt.xlabel("Epochs")
+plt.title("Training Metrics")
+plt.legend()
+plt.savefig(os.path.join(OUTPUT_DIR, "plots", "training_metrics.png"))
+plt.close()
