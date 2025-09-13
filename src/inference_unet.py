@@ -1,4 +1,3 @@
-import os
 import cv2
 import torch
 import numpy as np
@@ -15,6 +14,9 @@ ENCODER = 'resnet34'
 # --- Inference function ---
 def infer_image(model, image_path):
     image = cv2.imread(image_path)
+    if image is None:
+        raise FileNotFoundError(f"Image not found: {image_path}")
+
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_resized = cv2.resize(image_rgb, IMG_SIZE)
     image_norm = image_resized / 255.0
@@ -42,9 +44,9 @@ def visualize(image, mask):
 
 # --- Main ---
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="UNet Inference for Shadow-Casting Objects")
-    parser.add_argument("--image", type=str, required=True, help="Path to the input image")
-    parser.add_argument("--weights", type=str, required=True, help="Path to the trained UNet model (.pth)")
+    parser = argparse.ArgumentParser(description="UNet Inference for Shadow-Casting Objects", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--image", type=str, default="dataset/unet_dataset/images/19_61502050.jpg",required=True, help="Path to the input image")
+    parser.add_argument("--weights", type=str, default="outputs/models/unet_model.pth", required=True, help="Path to the trained UNet model (.pth)")
     args = parser.parse_args()
 
     # Load model
