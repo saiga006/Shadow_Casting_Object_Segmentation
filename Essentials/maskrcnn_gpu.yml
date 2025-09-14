@@ -1,0 +1,35 @@
+name: maskrcnn_gpu
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  # Core environment
+  - python=3.6
+  - pip
+
+  # Key libraries for scientific computing and data
+  - numpy=1.19.5
+  - scipy
+  - h5py
+  - cython
+
+
+  # Image processing and plotting
+  - matplotlib=3.3.4
+  - pillow
+  - scikit-image=0.17.2
+  # Jupyter for notebooks
+  - jupyter
+
+  # Dependencies to be installed with pip
+  - pip:
+    # NVIDIA-specific packages for GPU acceleration
+    - nvidia-pyindex==1.0.9
+    - nvidia-tensorflow==1.15.5+nv23.03
+    
+    # Core deep learning and computer vision libraries
+    - keras==2.2.4
+    - opencv-python==4.12.0.88
+    - imgaug==0.4.0
+    - shapely==1.8.5.post1
