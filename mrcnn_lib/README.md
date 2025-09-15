@@ -12,6 +12,13 @@ The dataset included follows the YOLO format for object detection training. The 
 - 🛠️ Scripts and models for training and inference.
 - 🔧 Tools for preprocessing and annotation support.
 
+## Authors ✍️
+
+- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) – [📧 Email](mailto:sai.ramamoorthy@smail.inf.h-brs.de)
+- [Shrikar Nakhye](https://www.linkedin.com/in/shrikar-n-053262188/) – [📧 Email](mailto:shrikar.nakhye@smail.inf.h-brs.de)
+
+####  Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)
+
 # Aerial Segmentation with Mask R-CNN
 
 This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the Matterport Mask R-CNN implementation and includes scripts for training, evaluation, and visualization.
