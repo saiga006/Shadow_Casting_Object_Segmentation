@@ -52,7 +52,6 @@
   - **New `unet.py`**:
     - A more detailed training script with logging to file, GPU monitoring, inference speed measurement, and plotting of metrics.
   - **README Overhaul**:
-    - Rebranded project as **🌍 PrithviVision**.
     - Documented goals (shadow-casting object segmentation in aerial imagery).
     - Added inference usage instructions.
     - Highlighted model variety (U-Net, YOLO, Mask R-CNN).
@@ -60,26 +59,16 @@
   A major milestone. The project now supports both **training and inference**, is parameterized for flexibility, and has a clear identity with improved documentation.
 
 ---
-
-# 🚀 Key Evolution
-
-1. **From Idea → Identity**
-   - Started as *Shadow_Casting_Object_Segmentation*.
-   - Rebranded to **PrithviVision**, aligning with broader goals in aerial image understanding.
-
-2. **From Training Only → Full Workflow**
-   - Early commits only supported training.
-   - Later commits introduced **inference, visualization, and modular scripts**.
-
-3. **From Local Hack → Portable Research Project**
-   - Cleaned environment setup.
-   - Enhanced documentation, logging, and reproducibility.
-
----
-
-# 📌 Next Steps (Future Roadmap)
-- Add **Mask R-CNN training pipeline** (already hinted in README).
-- Integrate **YOLO training/inference** with the curated dataset.
-- Add experiment tracking (e.g., Weights & Biases).
-
----
+# ⚠️ Challenges Faced
+	•	Environment Portability:
+   	•	Conda environment had hardcoded paths and platform-specific hashes.
+   	•	Solution: Cleaned YAML to make it portable across machines.
+ 	•	Model Training Stability:
+  	•	Initial UNet training sometimes crashed due to GPU memory spikes.
+  	•	Solution: Added GPU memory monitoring, reduced batch size, and simplified logging.
+	•	Inference Pipeline Integration:
+  	•	Early training scripts did not support running inference on new images.
+  	•	Solution: Created inference_unet.py and modularized scripts for flexibility.
+	•	Documentation and Usability:
+  	•	Original README was minimal and unclear for collaborators.
+  	•	Solution: Overhauled README with usage instructions, project goals, and model descriptions.
