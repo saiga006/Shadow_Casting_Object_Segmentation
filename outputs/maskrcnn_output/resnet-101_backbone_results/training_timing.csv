@@ -1,0 +1,6 @@
+metric,value_seconds,value_minutes,percentage_of_total
+total_training_time,909.85,15.16,51.7
+average_time_per_epoch,50.55,0.84,2.9
+total_evaluation_time,850.18,14.17,48.3
+total_session_time,1760.04,29.33,100.0
+epochs_per_hour,71.22,N/A,N/A

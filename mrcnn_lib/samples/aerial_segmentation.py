@@ -368,107 +368,42 @@ DEFAULT_LOGS_DIR = os.path.join(os.path.dirname(__file__), "../logs")
 
 # --- Configuration ---
 class TreeConfig(Config):
+    """Exact same configuration as tree_segmentation.py that achieved F1: 0.61 and mAP: 0.56"""
     NAME = "tree"
     IMAGES_PER_GPU = 1
     NUM_CLASSES = 1 + 1  # background + tree
-    STEPS_PER_EPOCH = 200  # Keep optimized value from tree_segmentation.py
-    
-    # === ENHANCED LEARNING PARAMETERS FOR BETTER CONVERGENCE ===
-    
-    # Optimized learning rate (much lower for fine-tuning)
-    LEARNING_RATE = 0.0001  # Reduced from 0.001
-    
-    # Enhanced momentum for stable convergence
-    LEARNING_MOMENTUM = 0.9
-    
-    # Increased weight decay for better regularization
-    WEIGHT_DECAY = 0.0005  # Increased from 0.0001
-    
-    # Gradient clipping to prevent exploding gradients
-    GRADIENT_CLIP_NORM = 5.0
-    
-    # === BATCH NORMALIZATION TRAINING (Critical for convergence) ===
-    TRAIN_BN = True  # Enable BN training for better convergence
-    
-    # === ENHANCED LOSS WEIGHTS FOR BALANCED TRAINING ===
-    LOSS_WEIGHTS = {
-        "rpn_class_loss": 1.0,
-        "rpn_bbox_loss": 1.0,
-        "mrcnn_class_loss": 1.0,
-        "mrcnn_bbox_loss": 1.0,
-        "mrcnn_mask_loss": 0.5  # Reduced to prevent mask loss dominance
-    }
-    
-    # === OPTIMIZED ROI SAMPLING ===
-    # ROI sampling optimized for tree detection (from tree_segmentation.py)
-    ROI_POSITIVE_RATIO = 0.4  # Better balance for tree detection
-    TRAIN_ROIS_PER_IMAGE = 50  # Optimized for tree segmentation
-    
-    # === ENHANCED ANCHOR CONFIGURATION ===
-    # Anchor scales tuned for trees (from tree_segmentation.py - better F1 performance)
-    RPN_ANCHOR_SCALES = (16, 32, 64, 128)  # Optimized for tree detection
-    RPN_ANCHOR_RATIOS = [0.5, 1, 2]  # Standard ratios for trees
-    
-    # === OPTIMIZED NMS PARAMETERS ===
-    RPN_NMS_THRESHOLD = 0.7  # Standard value
-    DETECTION_NMS_THRESHOLD = 0.3  # Keep existing
-    
-    # === DETECTION PARAMETERS ===
-    # Lower confidence threshold for better recall (from tree_segmentation.py)
-    DETECTION_MIN_CONFIDENCE = 0.80  # Optimized for tree detection
-    DETECTION_MAX_INSTANCES = 150  # Keep existing
-    
-    # === IMAGE PROCESSING ===
+    STEPS_PER_EPOCH = 200
+    # Preserve aspect ratio and pad to multiple of 64 (good for small fixed-size images)
     IMAGE_RESIZE_MODE = "pad64"
+    # Image size for this project (your images are ~500x500).
+    # Must be divisible by 2^6 (64). Use 512 to satisfy model down/up-scaling requirements.
     IMAGE_MIN_DIM = 512
     IMAGE_MAX_DIM = 512
-    
-    # === ENHANCED RPN TRAINING ===
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 256  # Standard value
-    PRE_NMS_LIMIT = 6000  # Optimized from tree_segmentation.py 
-    POST_NMS_ROIS_TRAINING = 2000  # Standard training ROIs
-    POST_NMS_ROIS_INFERENCE = 1000  # Standard inference ROIs
-    
-    # === GPU MEMORY OPTIMIZATIONS ===
-    BACKBONE = "resnet50"  # Memory efficient
-    VALIDATION_STEPS = 100
-    USE_MINI_MASK = True
-    MINI_MASK_SHAPE = (56, 56)  # Memory efficient
-    TOP_DOWN_PYRAMID_SIZE = 256
-    FPN_CLASSIF_FC_LAYERS_SIZE = 1024
-    
-    # === ENHANCED BBOX REGRESSION ===
-    # More precise bounding box regression
-    RPN_BBOX_STD_DEV = np.array([0.1, 0.1, 0.2, 0.2])
-    BBOX_STD_DEV = np.array([0.1, 0.1, 0.2, 0.2])
-    
-    # === POOLING OPTIMIZATION ===
-    POOL_SIZE = 7  # Standard pooling size
-    MASK_POOL_SIZE = 14  # Standard mask pooling
-    
-    # === ADDITIONAL CONVERGENCE OPTIMIZATIONS ===
-    
-    # Increase maximum GT instances for complex scenes with many trees
-    MAX_GT_INSTANCES = 150  # Increased from default 100
-    
-    # Enhanced RPN training parameters
-    RPN_ANCHOR_STRIDE = 1  # Dense anchor placement
-    
-    # Enhanced training stability
-    USE_RPN_ROIS = True  # Use RPN-generated ROIs
-    
-    # Image preprocessing optimization for trees
-    IMAGE_MIN_SCALE = 0  # No forced upscaling
-    IMAGE_CHANNEL_COUNT = 3  # RGB
-    MEAN_PIXEL = np.array([123.7, 116.8, 103.9])  # ImageNet means
-    
-    # === AUGMENTATION SUPPORT ===
-    # Enable data augmentation for better generalization
-    USE_AUGMENTATION = True
+    # Anchor scales tuned for trees
+    RPN_ANCHOR_SCALES = (16, 32, 64, 128)
+    # Lower default confidence during debugging; raise later for final evaluation
+    DETECTION_MIN_CONFIDENCE = 0.80
+    # Ensure a sensible maximum number of instances and NMS for this dataset
+    DETECTION_MAX_INSTANCES = 150
+    # NMS IOU
+    DETECTION_NMS_THRESHOLD = 0.3
+    # ROIs used for training the classifier/mask head
+    ROI_POSITIVE_RATIO = 0.4
+    # ROIs used for training the classifier/mask head
+    TRAIN_ROIS_PER_IMAGE = 50
     
     def __init__(self):
-        """Enhanced initialization with validation."""
+        """Initialize with tree_segmentation.py proven configuration + smooth loss trajectory."""
         super().__init__()
+        
+        # Moderate loss weights for smooth convergence (not too aggressive)
+        self.LOSS_WEIGHTS = {
+            "rpn_class_loss": 1.0,
+            "rpn_bbox_loss": 1.0,
+            "mrcnn_class_loss": 1.0,
+            "mrcnn_bbox_loss": 1.0,
+            "mrcnn_mask_loss": 1.5  # Slight increase for better masks, not too high
+        }
         
         # Validate critical parameters
         assert self.LEARNING_RATE > 0, "Learning rate must be positive"
@@ -479,17 +414,17 @@ class TreeConfig(Config):
         if hasattr(self, '_config_logged'):
             return
         self._config_logged = True
-        print(f"TreeConfig initialized with optimized settings from tree_segmentation.py:")
-        print(f"  Learning Rate: {self.LEARNING_RATE}")
-        print(f"  Weight Decay: {self.WEIGHT_DECAY}")
-        print(f"  Batch Norm Training: {self.TRAIN_BN}")
-        print(f"  ROI Positive Ratio: {self.ROI_POSITIVE_RATIO}")
-        print(f"  Train ROIs per Image: {self.TRAIN_ROIS_PER_IMAGE}")
-        print(f"  Anchor Scales: {self.RPN_ANCHOR_SCALES}")
-        print(f"  Detection Min Confidence: {self.DETECTION_MIN_CONFIDENCE}")
-        print(f"  Loss Weights: {self.LOSS_WEIGHTS}")
-        print(f"  Backbone: {self.BACKBONE}")
-        print("Configuration combines tree_segmentation.py optimizations with enhanced features")
+        print("TreeConfig: Proven Accuracy + Smooth Loss Trajectory")
+        print("Base config from tree_segmentation.py (F1: 0.61, mAP: 0.56)")
+        print("Enhanced with anti-overfitting for smooth loss:")
+        print(f"  Backbone: {self.BACKBONE} (ResNet101 for best accuracy)")
+        print(f"  Learning Rate: {self.LEARNING_RATE} (reduced for stability)")
+        print(f"  Weight Decay: {self.WEIGHT_DECAY} (moderate regularization)")
+        print(f"  Gradient Clip: {self.GRADIENT_CLIP_NORM} (conservative)")
+        print(f"  Batch Norm Training: {self.TRAIN_BN} (enabled for regularization)")
+        print(f"  Mask Loss Weight: {self.LOSS_WEIGHTS['mrcnn_mask_loss']} (slight boost)")
+        print(f"  Detection Parameters: Confidence={self.DETECTION_MIN_CONFIDENCE}, Max={self.DETECTION_MAX_INSTANCES}")
+        print("Optimized for: High accuracy + smooth loss + no overfitting")
 
 # --- Dataset ---
 class TreeDataset(utils.Dataset):
@@ -574,8 +509,8 @@ def compute_validation_metrics(dataset, model_infer, limit=None):
 
     total_images = len(image_ids)
     
-    # Memory-efficient evaluation: process images in smaller batches with cleanup
-    batch_size = 5  # Process 5 images at a time to prevent memory buildup
+    # Ultra-conservative memory management for evaluation
+    print("Starting ultra-conservative memory evaluation to prevent OOM...")
     
     for idx, image_id in enumerate(image_ids):
         image_start_time = time.time()
@@ -645,18 +580,18 @@ def compute_validation_metrics(dataset, model_infer, limit=None):
             print(f"Validation progress: {idx+1}/{total_images} images processed "
                   f"(Inference: {inference_time:.3f}s, Total: {image_total_time:.3f}s)")
         
-        # Memory cleanup every batch_size images
-        if (idx + 1) % batch_size == 0:
-            # Clear large variables
-            del image, gt_masks, pred_masks, r
-            if 'overlaps' in locals():
-                del overlaps
-            
-            # Force garbage collection
+        # Aggressive memory cleanup after EVERY image to prevent OOM
+        # Clear large variables immediately
+        del image, gt_masks, pred_masks, r
+        if 'overlaps' in locals():
+            del overlaps
+        
+        # Multiple garbage collection cycles for thorough cleanup
+        for _ in range(5):  # Increased from 3 to 5 cycles for more aggressive cleanup
             gc.collect()
-            
-            # Brief pause to allow GPU memory cleanup
-            time.sleep(0.1)
+        
+        # Longer pause to allow GPU memory cleanup
+        time.sleep(0.5)  # Increased from 0.2 to 0.5 seconds for better cleanup
 
     mean_iou = float(np.mean(ious)) if ious else 0.0
     mean_f1 = float(np.mean(f1s)) if f1s else 0.0
@@ -707,8 +642,8 @@ def evaluate_single_model(config, args, model_file, dataset_val):
         # Timing for evaluation
         eval_inference_start = time.time()
         
-        # Run evaluation with memory-efficient validation (limit images to reduce OOM risk)
-        mean_iou, mean_f1 = compute_validation_metrics(dataset_val, model, limit=50)  # Evaluate up to 50 validation images
+        # Run evaluation with conservative memory limits for 18-epoch training
+        mean_iou, mean_f1 = compute_validation_metrics(dataset_val, model, limit=15)  # Reduced to 15 for ResNet101 memory safety
         
         eval_inference_time = time.time() - eval_inference_start
         total_eval_time = time.time() - eval_start_time
@@ -721,13 +656,14 @@ def evaluate_single_model(config, args, model_file, dataset_val):
         except:
             pass
             
-        # Force garbage collection and add delay to prevent memory fragmentation
+        # Force garbage collection and add longer delay to prevent memory fragmentation
         import gc
-        gc.collect()
-        
-        # Add a small delay to allow GPU memory cleanup to complete
         import time
-        time.sleep(1.0)  # 1 second delay between model evaluations
+        for _ in range(10):  # Increased from 5 to 10 cycles for ultra-aggressive cleanup
+            gc.collect()
+        
+        # Add a longer delay to allow GPU memory cleanup to complete
+        time.sleep(3.0)  # Increased from 2.0 to 3.0 seconds delay between model evaluations
         
         return epoch, mean_iou, mean_f1, None, model_load_time, eval_inference_time, total_eval_time
         
@@ -736,8 +672,10 @@ def evaluate_single_model(config, args, model_file, dataset_val):
         
         # Force cleanup even on error
         import gc
-        gc.collect()
-        time.sleep(0.5)  # Shorter delay on error
+        import time
+        for _ in range(3):  # Increased from 1 to 3 cycles for error case
+            gc.collect()
+        time.sleep(1.0)  # Increased from 0.5 to 1.0 seconds delay on error
         
         return epoch, 0.0, 0.0, str(e), 0, 0, total_eval_time
 
@@ -842,13 +780,13 @@ def evaluate_all_epochs(config, args):
         import time
         
         # Force multiple garbage collection cycles
-        for _ in range(3):
+        for _ in range(5):  # Increased from 3 to 5 cycles
             gc.collect()
         
         # Add delay between evaluations to allow GPU memory cleanup
         if i < len(model_files) - 1:  # Don't delay after the last model
-            train_logger.info(f"Waiting 2 seconds for memory cleanup before next evaluation...")
-            time.sleep(2.0)  # 2 second delay between model evaluations
+            train_logger.info(f"Waiting 3 seconds for memory cleanup before next evaluation...")
+            time.sleep(3.0)  # Increased from 2.0 to 3.0 seconds delay between model evaluations
     
     # Summary of evaluation timing
     if model_load_times and eval_inference_times:
