@@ -371,7 +371,7 @@ class TreeConfig(Config):
     NAME = "tree"
     IMAGES_PER_GPU = 1
     NUM_CLASSES = 1 + 1  # background + tree
-    STEPS_PER_EPOCH = 200
+    STEPS_PER_EPOCH = 200  # Keep optimized value from tree_segmentation.py
     
     # === ENHANCED LEARNING PARAMETERS FOR BETTER CONVERGENCE ===
     
@@ -400,13 +400,13 @@ class TreeConfig(Config):
     }
     
     # === OPTIMIZED ROI SAMPLING ===
-    # Better balance between positive and negative ROIs
-    ROI_POSITIVE_RATIO = 0.33  # Slightly reduced from 0.4
-    TRAIN_ROIS_PER_IMAGE = 100  # Increased from 50 for better sampling
+    # ROI sampling optimized for tree detection (from tree_segmentation.py)
+    ROI_POSITIVE_RATIO = 0.4  # Better balance for tree detection
+    TRAIN_ROIS_PER_IMAGE = 50  # Optimized for tree segmentation
     
     # === ENHANCED ANCHOR CONFIGURATION ===
-    # Add smaller anchors for better tree detection
-    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)  # Added smaller scale (8)
+    # Anchor scales tuned for trees (from tree_segmentation.py - better F1 performance)
+    RPN_ANCHOR_SCALES = (16, 32, 64, 128)  # Optimized for tree detection
     RPN_ANCHOR_RATIOS = [0.5, 1, 2]  # Standard ratios for trees
     
     # === OPTIMIZED NMS PARAMETERS ===
@@ -414,7 +414,8 @@ class TreeConfig(Config):
     DETECTION_NMS_THRESHOLD = 0.3  # Keep existing
     
     # === DETECTION PARAMETERS ===
-    DETECTION_MIN_CONFIDENCE = 0.8 
+    # Lower confidence threshold for better recall (from tree_segmentation.py)
+    DETECTION_MIN_CONFIDENCE = 0.80  # Optimized for tree detection
     DETECTION_MAX_INSTANCES = 150  # Keep existing
     
     # === IMAGE PROCESSING ===
@@ -424,7 +425,7 @@ class TreeConfig(Config):
     
     # === ENHANCED RPN TRAINING ===
     RPN_TRAIN_ANCHORS_PER_IMAGE = 256  # Standard value
-    PRE_NMS_LIMIT = 6000  # Increase proposal generation
+    PRE_NMS_LIMIT = 6000  # Optimized from tree_segmentation.py 
     POST_NMS_ROIS_TRAINING = 2000  # Standard training ROIs
     POST_NMS_ROIS_INFERENCE = 1000  # Standard inference ROIs
     
@@ -450,16 +451,8 @@ class TreeConfig(Config):
     # Increase maximum GT instances for complex scenes with many trees
     MAX_GT_INSTANCES = 150  # Increased from default 100
     
-    # Optimize mask shape for tree segmentation
-    MASK_SHAPE = [28, 28]  # Standard mask resolution
-    
     # Enhanced RPN training parameters
     RPN_ANCHOR_STRIDE = 1  # Dense anchor placement
-    
-    # Optimized proposal limits for better recall
-    PRE_NMS_LIMIT = 8000  # Increased from 6000 for better proposals
-    POST_NMS_ROIS_TRAINING = 2000  # Standard training ROIs
-    POST_NMS_ROIS_INFERENCE = 1000  # Standard inference ROIs
     
     # Enhanced training stability
     USE_RPN_ROIS = True  # Use RPN-generated ROIs
@@ -486,16 +479,17 @@ class TreeConfig(Config):
         if hasattr(self, '_config_logged'):
             return
         self._config_logged = True
-        print(f"TreeConfig initialized:")
+        print(f"TreeConfig initialized with optimized settings from tree_segmentation.py:")
         print(f"  Learning Rate: {self.LEARNING_RATE}")
         print(f"  Weight Decay: {self.WEIGHT_DECAY}")
         print(f"  Batch Norm Training: {self.TRAIN_BN}")
         print(f"  ROI Positive Ratio: {self.ROI_POSITIVE_RATIO}")
         print(f"  Train ROIs per Image: {self.TRAIN_ROIS_PER_IMAGE}")
         print(f"  Anchor Scales: {self.RPN_ANCHOR_SCALES}")
+        print(f"  Detection Min Confidence: {self.DETECTION_MIN_CONFIDENCE}")
         print(f"  Loss Weights: {self.LOSS_WEIGHTS}")
         print(f"  Backbone: {self.BACKBONE}")
-        print("Configuration optimized for stable convergence and accuracy")
+        print("Configuration combines tree_segmentation.py optimizations with enhanced features")
 
 # --- Dataset ---
 class TreeDataset(utils.Dataset):

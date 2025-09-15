@@ -23,7 +23,7 @@ if ROOT_DIR not in sys.path:
 from mrcnn import model as modellib
 from mrcnn import utils
 # Import local config/dataset
-from samples.tree_segmentation import TreeConfig, TreeDataset
+from samples.aerial_segmentation import TreeConfig, TreeDataset
 
 
 def save_overlay(image, gt_masks, pred_masks, out_path, alpha=0.4):
