@@ -1,0 +1,8 @@
+2025-09-15 00:50:30,419 - /home/saiga/miniconda3/envs/maskrcnn_gpu/lib/python3.6/site-packages/tensorflow_core/python/framework/indexed_slices.py:424: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+2025-09-15 00:50:30,459 - /home/saiga/miniconda3/envs/maskrcnn_gpu/lib/python3.6/site-packages/tensorflow_core/python/framework/indexed_slices.py:424: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+2025-09-15 00:50:30,540 - /home/saiga/miniconda3/envs/maskrcnn_gpu/lib/python3.6/site-packages/tensorflow_core/python/framework/indexed_slices.py:424: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+2025-09-15 00:50:30,917 - /home/saiga/miniconda3/envs/maskrcnn_gpu/lib/python3.6/site-packages/keras/engine/training_generator.py:47: UserWarning: Using a generator with `use_multiprocessing=True` and multiple workers may duplicate your data. Please consider using the`keras.utils.Sequence class.
+  UserWarning('Using a generator with `use_multiprocessing=True`'
