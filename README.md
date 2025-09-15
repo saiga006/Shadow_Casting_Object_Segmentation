@@ -79,7 +79,6 @@ Open issues or submit pull requests to improve PrithviVision.
 - [Shrikar Nakhye](https://www.linkedin.com/in/shrikar-n-053262188/) – [📧 Email](mailto:shrikar.nakhye@smail.inf.h-brs.de)
 
 - [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) – [📧 Email](mailto:sai.ramamoorthy@smail.inf.h-brs.de)
-- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) – [📧 Email](mailto:kai.glasenapp@smail.inf.h-brs.de)
 
 ---
 
