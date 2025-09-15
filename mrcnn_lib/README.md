@@ -1,3 +1,17 @@
+# Shadow Casting Object Segmentation 🌑🖼️
+
+## Overview 🎯
+
+This repository contains code and datasets related to shadow casting object segmentation. The project focuses on detecting and segmenting objects in images affected by shadows, a challenging task in computer vision due to the complex interaction between objects and shadow patterns.
+
+The dataset included follows the YOLO format for object detection training. The segmentation approach aims to improve accuracy in scenarios with significant shadow effects.
+
+## Features ✨
+
+- 📂 Dataset prepared in YOLO format for shadow-affected object segmentation.
+- 🛠️ Scripts and models for training and inference.
+- 🔧 Tools for preprocessing and annotation support.
+
 # Aerial Segmentation with Mask R-CNN
 
 This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the Matterport Mask R-CNN implementation and includes scripts for training, evaluation, and visualization.
