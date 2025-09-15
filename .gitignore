@@ -1,7 +1,7 @@
 # Data files and directories common in repo root
 datasets/
-logs/
 *.h5
+logs/
 results/
 temp/
 test/
@@ -64,7 +64,6 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
