@@ -33,7 +33,7 @@ This project provides an implementation of Mask R-CNN for instance segmentation 
 Create a conda environment with the required dependencies using the provided environment file:
 
 ```bash
-conda env create -f ../Essentials/maskrcnn_gpu.yml
+conda env create -f Essentials/maskrcnn_gpu.yml
 ```
 
 ### 2. Activate Environment
@@ -243,78 +243,34 @@ python3 samples/aerial_segmentation.py --command test \
 #### 2. Batch Inference with Custom Settings
 
 ```bash
-python3 samples/aerial_segmentation.py --command test \
-    --weights /path/to/trained_model.h5 \
-    --image /path/to/test_image.jpg \
-    --min_confidence 0.7 \
-    --save_overlay \
-    --output /path/to/output_directory
+python inference_unet.py
 ```
 
-**Inference Options:**
-- `--weights`: Path to trained model weights (`.h5` file) (required)
-- `--image`: Path to input image for inference (required for test mode)
-- `--min_confidence`: Detection confidence threshold (default: 0.8)
-- `--save_overlay`: Save visualization with detected masks
-- `--output`: Custom output path for results
+<!--### Training Mask R-CNN (Optional) 🖼️-->
 
-### Evaluation
+---
 
-#### 1. Standard Evaluation
+## Contributing 🤝
 
-Compute Average Precision (AP) on validation set:
+Contributions are welcome!
+Open issues or submit pull requests to improve PrithviVision.
 
-```bash
-python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
-    --subset valid \
-    --weights /path/to/trained_model.h5 \
-    --output evaluation_results.csv
-```
+---
 
-#### 2. Detailed Evaluation with Visualizations
+## Authors ✍️
 
-```bash
-python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
-    --subset valid \
-    --weights /path/to/trained_model.h5 \
-    --output detailed_results.csv \
-    --save_overlays /path/to/overlay_output \
-    --iou 0.5 \
-    --limit 100 \
-    --min_confidence 0.7
-```
+- [Shrikar Nakhye](https://www.linkedin.com/in/shrikar-n-053262188/) – [📧 Email](mailto:shrikar.nakhye@smail.inf.h-brs.de)
 
-**Evaluation Options:**
-- `--dataset`: Path to YOLO-format dataset (required)
-- `--subset`: Dataset subset to evaluate - `train` or `valid` (default: `valid`)
-- `--weights`: Path to trained model weights (required)
-- `--output`: CSV file for detailed results (default: `eval_results.csv`)
-- `--save_overlays`: Directory to save prediction overlay images
-- `--iou`: IoU threshold for AP calculation (default: 0.5)
-- `--limit`: Maximum number of images to evaluate
-- `--min_confidence`: Override model's detection confidence threshold
-- `--logs`: Custom logs directory (default: `../logs`)
+- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) – [📧 Email](mailto:sai.ramamoorthy@smail.inf.h-brs.de)
+- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) – [📧 Email](mailto:kai.glasenapp@smail.inf.h-brs.de)
 
-**Evaluation Outputs:**
-- **CSV Results**: Per-image metrics including ground truth count, predictions, and AP scores
-- **Overlay Images**: Visual comparison of predictions vs ground truth (if `--save_overlays` specified)
-- **Summary Statistics**: Mean AP across all evaluated images
+---
 
-### Alternative Baseline Script
+## Acknowledgments 🙏
 
-For simpler training without advanced features, use the baseline script:
+This project was developed as part of the coursework for the DLRV – Deep Learning for Robot Vision class at Hochschule Bonn-Rhein-Sieg during Summer Semester 2025.
 
-```bash
-# Training
-python3 samples/tree_segmentation.py --command train \
-    --dataset /path/to/yolo_dataset \
-    --weights coco \
-    --layers heads
+Special thanks to:
 
-# Inference with overlay
-python3 samples/tree_segmentation.py --command test \
-    --image /path/to/image.jpg \
-    --weights /path/to/model.h5 \
-    --save_overlay \
-    --output /path/to/result.jpg
-```
+- [**Prof. Dr. Sebastian Houben**](sebastian.houben@h-brs.de)
+  For his guidance, valuable insights, and continuous support throughout the course and project.

@@ -1,6 +1,6 @@
 
 # 📓 Developer’s Journal – snakhy2s - Shrikar Nakhye
-
+Repo URL - https://github.com/ItsShriks/PrithviVision
 ---
 
 ## **Initial Commit** (04.06.25, 19:35:54)
