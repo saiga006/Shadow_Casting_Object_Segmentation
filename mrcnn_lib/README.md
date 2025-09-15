@@ -1,3 +1,449 @@
+# Aerial Segmentation with Mask R-CNN
+
+This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the Matterport Mask R-CNN implementation and includes scripts for training, evaluation, and visualization.
+
+## Environment Setup
+
+### 1. Create Conda Environment
+
+Create a conda environment with the required dependencies using the provided environment file:
+
+```bash
+conda env create -f ../Essentials/maskrcnn_gpu.yml
+```
+
+### 2. Activate Environment
+
+```bash
+conda activate maskrcnn_gpu
+```
+
+### 3. Install Matterport Mask R-CNN
+
+Follow the official Matterport Mask R-CNN setup process:
+
+```bash
+# Install the mrcnn package
+cd mrcnn_lib
+python3 setup.py install
+
+# Download pre-trained COCO weights (required for transfer learning)
+wget https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5
+```
+
+**Note**: Ensure you have CUDA-compatible GPU drivers installed for optimal performance with the nvidia-tensorflow package.
+
+## Scripts
+
+### 1. `aerial_segmentation.py`
+
+The main production script for training and testing Mask R-CNN models on aerial tree imagery. This enhanced implementation includes advanced memory management, comprehensive logging, and post-training evaluation features.
+
+**Key Features:**
+- **Post-Training Evaluation**: Validates all saved epochs after training to conserve GPU memory
+- **Advanced Logging**: Separates stdout/stderr into `training.log` and `training_error.log`
+- **GPU Monitoring**: Real-time GPU memory usage tracking with CSV output
+- **Signal Handlers**: Graceful cleanup on interruption to prevent GPU memory leaks
+- **Optimized Config**: Tuned hyperparameters for aerial tree segmentation
+
+**Training Command:**
+```bash
+python3 samples/aerial_segmentation.py --command train --dataset /path/to/yolo_dataset --weights coco --logs /path/to/logs
+```
+
+**Inference Command:**
+```bash
+python3 samples/aerial_segmentation.py --command test --dataset /path/to/yolo_dataset --weights /path/to/trained_weights.h5 --image /path/to/test_image.jpg
+```
+
+### 2. `eval_ap.py`
+
+Evaluation script that computes Average Precision (AP) metrics on dataset subsets using trained models. Provides detailed per-image analysis and supports overlay visualization.
+
+**Key Features:**
+- **AP Computation**: Uses COCO-style evaluation metrics with configurable IoU thresholds
+- **CSV Output**: Detailed per-image results with ground truth vs prediction counts
+- **Overlay Generation**: Optional visualization of predictions vs ground truth
+- **Batch Processing**: Efficient evaluation on validation/test sets
+
+**Evaluation Command:**
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset --subset valid --weights /path/to/weights.h5 --output results.csv --iou 0.5
+```
+
+**With Overlays:**
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset --weights /path/to/weights.h5 --save_overlays /path/to/output_dir --limit 50
+```
+
+### 3. `tree_segmentation.py`
+
+Simplified baseline script that provides basic training and inference functionality. This script served as the foundation for the enhanced `aerial_segmentation.py` implementation.
+
+**Key Features:**
+- **Simple Interface**: Basic train/test commands without advanced features
+- **GPU Memory Limiting**: Optional 4GB GPU memory constraint
+- **Overlay Generation**: Basic prediction visualization with contours
+- **Configuration Display**: Shows active model parameters during execution
+
+**Training Command:**
+```bash
+python3 samples/tree_segmentation.py --command train --dataset /path/to/yolo_dataset --weights coco --epochs 30
+```
+
+**Inference Command:**
+```bash
+python3 samples/tree_segmentation.py --command test --image /path/to/image.jpg --weights /path/to/weights.h5 --save_overlay --output /path/to/output.jpg
+```
+
+## Results
+
+The model was trained on a custom dataset of aerial images with YOLO-style polygon annotations. The training produced the following metrics, which show the model's learning progress over time.
+
+![Training Metrics](../outputs/maskrcnn_output/comprehensive_training_metrics.png)
+
+The above chart displays the training and validation losses, as well as the F1-score and IoU, providing a comprehensive view of the model's performance.
+
+## Getting Started
+
+### Dataset Preparation
+
+Ensure your dataset follows the YOLO format structure:
+```
+dataset/
+├── train/
+│   ├── images/
+│   └── labels/
+└── valid/
+    ├── images/
+    └── labels/
+```
+
+**Important Note on Dataset Processing:**
+
+The Mask R-CNN scripts (`aerial_segmentation.py` and `tree_segmentation.py`) include built-in preprocessing that automatically converts YOLO-format polygon annotations to Mask R-CNN format during runtime. This conversion process:
+
+- Reads YOLO-style `.txt` label files with normalized polygon coordinates
+- Converts polygon coordinates to pixel coordinates based on image dimensions
+- Generates binary masks for each object instance using `cv2.fillPoly()`
+- Creates the required mask arrays and class IDs for Mask R-CNN training
+
+**Key Differences from U-Net:**
+- **U-Net**: Requires pre-processed masks saved as separate image files
+- **Mask R-CNN**: Processes YOLO annotations on-the-fly during training/inference
+- **Storage**: No intermediate mask files are saved to disk, reducing storage requirements
+- **Flexibility**: Supports multiple instances per image with individual masks per object
+
+This runtime conversion approach allows for efficient memory usage and eliminates the need to store large mask files, unlike the U-Net implementation which requires pre-generated mask images.
+
+### Training
+
+#### 1. Basic Training (Recommended)
+
+Start training with pre-trained COCO weights:
+
+```bash
+python3 samples/aerial_segmentation.py --command train --dataset /path/to/yolo_dataset --weights coco
+```
+
+#### 2. Training with Custom Options
+
+```bash
+python3 samples/aerial_segmentation.py --command train \
+    --dataset /path/to/yolo_dataset \
+    --weights coco \
+    --logs /custom/logs/directory \
+    --epochs 25
+```
+
+#### 3. Resume Training from Checkpoint
+
+```bash
+python3 samples/aerial_segmentation.py --command train \
+    --dataset /path/to/yolo_dataset \
+    --weights /path/to/checkpoint.h5 \
+    --logs /logs/directory
+```
+
+**Training Options:**
+- `--dataset`: Path to YOLO-format dataset directory (required)
+- `--weights`: Pre-trained weights - use `coco` for COCO weights or path to `.h5` file
+- `--logs`: Directory to save training logs and model checkpoints (default: `../logs`)
+- `--epochs`: Number of training epochs (default: 25)
+- `--layers`: Layers to train - `heads` (default) or `all`
+
+**Training Features:**
+- **Automatic GPU Memory Management**: Optimized memory allocation to prevent OOM errors
+- **Progressive Evaluation**: Post-training validation on all saved epochs
+- **Comprehensive Logging**: Separate log files for training and error messages
+- **Real-time Monitoring**: GPU memory usage tracking throughout training
+- **Signal Handling**: Safe cleanup on interruption (Ctrl+C)
+
+### Inference
+
+#### 1. Single Image Inference
+
+```bash
+python3 samples/aerial_segmentation.py --command test \
+    --weights /path/to/trained_model.h5 \
+    --image /path/to/test_image.jpg
+```
+
+#### 2. Batch Inference with Custom Settings
+
+```bash
+python3 samples/aerial_segmentation.py --command test \
+    --weights /path/to/trained_model.h5 \
+    --image /path/to/test_image.jpg \
+    --min_confidence 0.7 \
+    --save_overlay \
+    --output /path/to/output_directory
+```
+
+**Inference Options:**
+- `--weights`: Path to trained model weights (`.h5` file) (required)
+- `--image`: Path to input image for inference (required for test mode)
+- `--min_confidence`: Detection confidence threshold (default: 0.8)
+- `--save_overlay`: Save visualization with detected masks
+- `--output`: Custom output path for results
+
+### Evaluation
+
+#### 1. Standard Evaluation
+
+Compute Average Precision (AP) on validation set:
+
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
+    --subset valid \
+    --weights /path/to/trained_model.h5 \
+    --output evaluation_results.csv
+```
+
+#### 2. Detailed Evaluation with Visualizations
+
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
+    --subset valid \
+    --weights /path/to/trained_model.h5 \
+    --output detailed_results.csv \
+    --save_overlays /path/to/overlay_output \
+    --iou 0.5 \
+    --limit 100 \
+    --min_confidence 0.7
+```
+
+**Evaluation Options:**
+- `--dataset`: Path to YOLO-format dataset (required)
+- `--subset`: Dataset subset to evaluate - `train` or `valid` (default: `valid`)
+- `--weights`: Path to trained model weights (required)
+- `--output`: CSV file for detailed results (default: `eval_results.csv`)
+- `--save_overlays`: Directory to save prediction overlay images
+- `--iou`: IoU threshold for AP calculation (default: 0.5)
+- `--limit`: Maximum number of images to evaluate
+- `--min_confidence`: Override model's detection confidence threshold
+- `--logs`: Custom logs directory (default: `../logs`)
+
+**Evaluation Outputs:**
+- **CSV Results**: Per-image metrics including ground truth count, predictions, and AP scores
+- **Overlay Images**: Visual comparison of predictions vs ground truth (if `--save_overlays` specified)
+- **Summary Statistics**: Mean AP across all evaluated images
+
+### Alternative Baseline Script
+
+For simpler training without advanced features, use the baseline script:
+
+```bash
+# Training
+python3 samples/tree_segmentation.py --command train \
+    --dataset /path/to/yolo_dataset \
+    --weights coco \
+    --layers heads
+
+# Inference with overlay
+python3 samples/tree_segmentation.py --command test \
+    --image /path/to/image.jpg \
+    --weights /path/to/model.h5 \
+    --save_overlay \
+    --output /path/to/result.jpg
+```
+
+---
+
+# Matterport's Mask R-CNN for Object Detection and Segmentation
+
+This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
+
+![Instance Segmentation Sample](assets/street.png)
+
+The repository includes:
+* Source code of Mask R-CNN built on FPN and ResNet101.
+* Training code for MS COCO
+* Pre-trained weights for MS COCO
+* Jupyter notebooks to visualize the detection pipeline at every step
+* ParallelModel class for multi-GPU training
+* Evaluation on MS COCO metrics (AP)
+* Example of training on your own dataset
+
+
+The code is documented and designed to be easy to extend. If you use it in your research, please consider citing this repository (bibtex below). If you work on 3D vision, you might find our recently released [Matterport3D](https://matterport.com/blog/2017/09/20/announcing-matterport3d-research-dataset/) dataset useful as well.
+This dataset was created from 3D-reconstructed spaces captured by our customers who agreed to make them publicly available for academic use. You can see more examples [here](https://matterport.com/gallery/).
+
+# Getting Started
+## 6. Logging to TensorBoard
+TensorBoard is another great debugging and visualization tool. The model is configured to log losses and save weights at the end of every epoch.
+
+![](assets/detection_tensorboard.png)
+
+## 6. Composing the different pieces into a final result
+
+![](assets/detection_final.png)
+
+
+# Training on MS COCO
+We're providing pre-trained weights for MS COCO to make it easier to start. You can
+use those weights as a starting point to train your own variation on the network.
+Training and evaluation code is in `samples/coco/coco.py`. You can import this
+module in Jupyter notebook (see the provided notebooks for examples) or you
+can run it directly from the command line as such:
+
+```
+# Train a new model starting from pre-trained COCO weights
+python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=coco
+
+# Train a new model starting from ImageNet weights
+python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=imagenet
+
+# Continue training a model that you had trained earlier
+python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=/path/to/weights.h5
+
+# Continue training the last model you trained. This will find
+# the last trained weights in the model directory.
+python3 samples/coco/coco.py train --dataset=/path/to/coco/ --model=last
+```
+
+You can also run the COCO evaluation code with:
+```
+# Run COCO evaluation on the last trained model
+python3 samples/coco/coco.py evaluate --dataset=/path/to/coco/ --model=last
+```
+
+The training schedule, learning rate, and other parameters should be set in `samples/coco/coco.py`.
+
+
+# Training on Your Own Dataset
+
+Start by reading this [blog post about the balloon color splash sample](https://engineering.matterport.com/splash-of-color-instance-segmentation-with-mask-r-cnn-and-tensorflow-7c761e238b46). It covers the process starting from annotating images to training to using the results in a sample application.
+
+In summary, to train the model on your own dataset you'll need to extend two classes:
+
+```Config```
+This class contains the default configuration. Subclass it and modify the attributes you need to change.
+
+```Dataset```
+This class provides a consistent way to work with any dataset. 
+It allows you to use new datasets for training without having to change 
+the code of the model. It also supports loading multiple datasets at the
+same time, which is useful if the objects you want to detect are not 
+all available in one dataset. 
+
+See examples in `samples/shapes/train_shapes.ipynb`, `samples/coco/coco.py`, `samples/balloon/balloon.py`, and `samples/nucleus/nucleus.py`.
+
+## Differences from the Official Paper
+This implementation follows the Mask RCNN paper for the most part, but there are a few cases where we deviated in favor of code simplicity and generalization. These are some of the differences we're aware of. If you encounter other differences, please do let us know.
+
+* **Image Resizing:** To support training multiple images per batch we resize all images to the same size. For example, 1024x1024px on MS COCO. We preserve the aspect ratio, so if an image is not square we pad it with zeros. In the paper the resizing is done such that the smallest side is 800px and the largest is trimmed at 1000px.
+* **Bounding Boxes**: Some datasets provide bounding boxes and some provide masks only. To support training on multiple datasets we opted to ignore the bounding boxes that come with the dataset and generate them on the fly instead. We pick the smallest box that encapsulates all the pixels of the mask as the bounding box. This simplifies the implementation and also makes it easy to apply image augmentations that would otherwise be harder to apply to bounding boxes, such as image rotation.
+
+    To validate this approach, we compared our computed bounding boxes to those provided by the COCO dataset.
+We found that ~2% of bounding boxes differed by 1px or more, ~0.05% differed by 5px or more, 
+and only 0.01% differed by 10px or more.
+
+* **Learning Rate:** The paper uses a learning rate of 0.02, but we found that to be
+too high, and often causes the weights to explode, especially when using a small batch
+size. It might be related to differences between how Caffe and TensorFlow compute 
+gradients (sum vs mean across batches and GPUs). Or, maybe the official model uses gradient
+clipping to avoid this issue. We do use gradient clipping, but don't set it too aggressively.
+We found that smaller learning rates converge faster anyway so we go with that.
+
+## Citation
+Use this bibtex to cite this repository:
+```
+@misc{matterport_maskrcnn_2017,
+  title={Mask R-CNN for object detection and instance segmentation on Keras and TensorFlow},
+  author={Waleed Abdulla},
+  year={2017},
+  publisher={Github},
+  journal={GitHub repository},
+  howpublished={\url{https://github.com/matterport/Mask_RCNN}},
+}
+```
+
+## Requirements
+Python 3.4, TensorFlow 1.3, Keras 2.0.8 and other common packages listed in `requirements.txt`.
+
+### MS COCO Requirements:
+To train or test on MS COCO, you'll also need:
+* pycocotools (see the instructions under the Installation section for details)
+* MS COCO Dataset > http://cocodataset.org
+
+## Installation
+1. Clone this repository
+2. Install dependencies
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+3. Run setup from the repository root directory
+   ```bash
+   python3 setup.py install
+   ```
+4. Download pre-trained COCO weights (mask_rcnn_coco.h5) from the [releases page](https://github.com/matterport/Mask_RCNN/releases).
+5. (Optional) To train or test on MS COCO install `pycocotools` from one of these repos. They are forks of the original pycocotools with fixes for Python3 and Windows (the official repo doesn't seem to be active anymore).
+
+   * Linux: https://github.com/waleedka/coco
+   * Windows: https://github.com/philferriere/cocoapi.
+   You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
+
+## Contributing
+Contributions to this repository are welcome. Examples of things you can contribute:
+* Speed Improvements. Like re-writing some Python code in Cython.
+* Training on other datasets.
+* Accuracy Improvements.
+* Visualizations and examples.
+
+You can also join the Matterport community and contribute to the Matterport3D dataset.
+
+
+**Training the model:**
+
+```bash
+python3 samples/aerial_segmentation.py train --dataset /path/to/yolo_dataset --weights coco
+```
+
+### 2. `eval_ap.py`
+
+This script is used to evaluate the model's performance by computing the Average Precision (AP) on a dataset subset.
+
+**Evaluating the model:**
+
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset --subset valid --weights /path/to/weights.h5
+```
+
+### 3. `tree_segmentation.py`
+
+This script provides an alternative and simplified training and inference pipeline, which served as the baseline for this project.
+
+## Results
+
+The model was trained on a custom dataset of aerial images with YOLO-style polygon annotations. The training produced the following metrics, which show the model's learning progress over time.
+
+![Training Metrics](../outputs/maskrcnn_output/comprehensive_training_metrics.png)
+
+The above chart displays the training and validation losses, as well as the F1-score and IoU, providing a comprehensive view of the model's performance.
+
+---
+
 # Mask R-CNN for Object Detection and Segmentation
 
 This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
@@ -18,53 +464,6 @@ The code is documented and designed to be easy to extend. If you use it in your 
 This dataset was created from 3D-reconstructed spaces captured by our customers who agreed to make them publicly available for academic use. You can see more examples [here](https://matterport.com/gallery/).
 
 # Getting Started
-* [demo.ipynb](samples/demo.ipynb) Is the easiest way to start. It shows an example of using a model pre-trained on MS COCO to segment objects in your own images.
-It includes code to run object detection and instance segmentation on arbitrary images.
-
-* [train_shapes.ipynb](samples/shapes/train_shapes.ipynb) shows how to train Mask R-CNN on your own dataset. This notebook introduces a toy dataset (Shapes) to demonstrate training on a new dataset.
-
-* ([model.py](mrcnn/model.py), [utils.py](mrcnn/utils.py), [config.py](mrcnn/config.py)): These files contain the main Mask RCNN implementation. 
-
-
-* [inspect_data.ipynb](samples/coco/inspect_data.ipynb). This notebook visualizes the different pre-processing steps
-to prepare the training data.
-
-* [inspect_model.ipynb](samples/coco/inspect_model.ipynb) This notebook goes in depth into the steps performed to detect and segment objects. It provides visualizations of every step of the pipeline.
-
-* [inspect_weights.ipynb](samples/coco/inspect_weights.ipynb)
-This notebooks inspects the weights of a trained model and looks for anomalies and odd patterns.
-
-
-# Step by Step Detection
-To help with debugging and understanding the model, there are 3 notebooks 
-([inspect_data.ipynb](samples/coco/inspect_data.ipynb), [inspect_model.ipynb](samples/coco/inspect_model.ipynb),
-[inspect_weights.ipynb](samples/coco/inspect_weights.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
-
-
-
-## 1. Anchor sorting and filtering
-Visualizes every step of the first stage Region Proposal Network and displays positive and negative anchors along with anchor box refinement.
-![](assets/detection_anchors.png)
-
-## 2. Bounding Box Refinement
-This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-![](assets/detection_refinement.png)
-
-## 3. Mask Generation
-Examples of generated masks. These then get scaled and placed on the image in the right location.
-
-![](assets/detection_masks.png)
-
-## 4.Layer activations
-Often it's useful to inspect the activations at different layers to look for signs of trouble (all zeros or random noise).
-
-![](assets/detection_activations.png)
-
-## 5. Weight Histograms
-Another useful debugging tool is to inspect the weight histograms. These are included in the inspect_weights.ipynb notebook.
-
-![](assets/detection_histograms.png)
-
 ## 6. Logging to TensorBoard
 TensorBoard is another great debugging and visualization tool. The model is configured to log losses and save weights at the end of every epoch.
 
