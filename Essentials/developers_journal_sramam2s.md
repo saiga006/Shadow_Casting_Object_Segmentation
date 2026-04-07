@@ -273,15 +273,7 @@ Repo URL - https://github.com/saiga006/Shadow_Casting_Object_Segmentation
 ### **Documentation & Reproducibility**
 - **Complex Multi-Script Workflow**: Training, evaluation, inference separate
 - **Environment Setup Complexity**: Multiple dependency conflicts
-- **Solution**: Comprehensive README, step-by-step usage examples
-
-## **Key Lessons Learned**
-
-1. **Legacy Framework Pain**: TensorFlow 1.x compatibility issues are real and time-consuming
-2. **Memory is King**: GPU memory management crucial for complex models like Mask R-CNN
-3. **Hyperparameter Sensitivity**: Instance segmentation much more sensitive than semantic segmentation
-4. **Production Polish**: 80% of development time spent on robustness, not core functionality
-5. **Documentation Investment**: Good documentation saves hours of debugging for collaborators
+- **Solution**: Comprehensive README, with instructions for step-by-step usage examples with conda environment setup to resolve dependency errors.
 
 ## **Success Metrics Achieved**
 - **U-Net Baseline**: IoU 0.742, F1 0.841, 52ms inference
