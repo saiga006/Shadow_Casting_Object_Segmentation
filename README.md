@@ -11,20 +11,77 @@ The project combines **U-Net, YOLO, and Mask R-CNN** approaches to handle both *
 - 📂 **YOLO-format dataset** prepared for aerial shadow segmentation.
 - 🧠 **Multiple models supported** – U-Net, YOLO, Mask R-CNN.
 - 🛠️ **Preprocessing & annotation utilities** for dataset preparation.
-- ⚡ Modular training and inference scripts.
+- ⚡ **Modular** training and inference scripts.
+
+---
+
+## Repository Structure & Git History 📂
+
+**Version Control History:**
+This repository was initially forked from the [Matterport Mask R-CNN implementation](https://github.com/matterport/Mask_RCNN) and also forked the changes from the [Prithvi Vision](https://github.com/ItsShriks/PrithviVision) repo. Later changes were done in both branches, and then the changes of Prithvi Vision were rebased on top of the Mask R-CNN dev branch (maskrcnn_model) changes to form the current unified structure.
+
+```text
+Shadow_Casting_Object_Segmentation/
+├── Essentials/           # Environment configs (.yml), developer journals, and requirements
+├── Proposal/             # Project proposal documentation
+├── Report/               # LaTeX project report source code, styles, and image assets
+├── dataset/              # Training and validation data
+│   ├── unet_dataset/     # Pre-processed dataset for U-Net segmentation (Prithvi Vision)
+│   └── yolo_dataset/     # YOLO format dataset for Mask R-CNN training & evaluation
+├── mrcnn_lib/            # Core Mask R-CNN framework (forked from Matterport)
+│   ├── mrcnn/            # Core architecture and model definition modules
+│   └── samples/          # Mask R-CNN execution scripts
+│       ├── aerial_segmentation.py  # Advanced training/inference script with memory mgmt
+│       ├── eval_ap.py              # Script for computing mAP and generating overlays
+│       └── tree_segmentation.py    # Baseline simplified training & inference script
+├── outputs/              # Evaluation results, saved models, and metrics
+│   ├── maskrcnn_output/  # Mask R-CNN training metrics, GPU memory logs, and result plots
+│   ├── models/           # Saved U-Net model checkpoints (.pth)
+│   └── plots/            # U-Net qualitative segmentation output images
+├── src/                  # U-Net source code (forked from Prithvi Vision)
+│   ├── train_unet.py     # U-Net model training script
+│   ├── inference_unet.py # U-Net model inference script
+│   └── yolo_to_unet.py   # Utility to convert YOLO annotations to U-Net masks
+├── .gitignore            # Git ignore definitions
+└── README.md             # Project overview and instructions
+```
+
+---
+
+## Contributing 🤝
+
+Contributions are welcome!
+Open issues or submit pull requests to improve the Aerial Segmentation performance.
 
 ---
 
 ## Authors ✍️
 
-- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) – [📧 Email](mailto:sai.ramamoorthy@smail.inf.h-brs.de)
-- [Shrikar Nakhye](https://www.linkedin.com/in/shrikar-n-053262188/) – [📧 Email](mailto:shrikar.nakhye@smail.inf.h-brs.de)
+- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) for Mask-RCNN Model Training/Inference scripts and Report Generation.
+
+- [Shrikar Nakhye](mailto:shrikar.nakhye@smail.inf.h-brs.de) for Unet Model Training/Inference scripts and Report Generation.
+
+- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) for providing Bonn City Aerial Dataset.
+
+---
+
+## Acknowledgments 🙏
+
+This project was developed as part of the coursework for the DLRV – Deep Learning for Robot Vision class at Hochschule Bonn-Rhein-Sieg during Summer Semester 2025.
+
+Special thanks to:
+
+- [**Prof. Dr. Sebastian Houben**](sebastian.houben@h-brs.de)
+  For his guidance, valuable insights, and continuous support throughout the course and project.
+
+---
 
 ####  Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)
+---
 
 # Aerial Segmentation with Mask R-CNN
 
-This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the Matterport Mask R-CNN implementation and includes scripts for training, evaluation, and visualization.
+This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the [Matterport Mask R-CNN implementation](https://github.com/matterport/Mask_RCNN) and includes scripts for training, evaluation, and visualization.
 
 ## Environment Setup
 
@@ -59,7 +116,7 @@ wget https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_co
 
 ## Scripts
 
-These are based on the scripts present inside mrcnn_lib directory.
+These are based on the scripts present inside [mrcnn_lib](./mrcnn_lib) directory.
 Structure is kept in a way in a syncronous with matterports maskrcnn implementation. To know more about Matterport's Mask-RCNN implementation,
 [check here](https://github.com/matterport/Mask_RCNN) and their [blog post](https://engineering.matterport.com/splash-of-color-instance-segmentation-with-mask-r-cnn-and-tensorflow-7c761e238b46).
 
@@ -243,34 +300,78 @@ python3 samples/aerial_segmentation.py --command test \
 #### 2. Batch Inference with Custom Settings
 
 ```bash
-python inference_unet.py
+python3 samples/aerial_segmentation.py --command test \
+    --weights /path/to/trained_model.h5 \
+    --image /path/to/test_image.jpg \
+    --min_confidence 0.7 \
+    --save_overlay \
+    --output /path/to/output_directory
 ```
 
-<!--### Training Mask R-CNN (Optional) 🖼️-->
+**Inference Options:**
+- `--weights`: Path to trained model weights (`.h5` file) (required)
+- `--image`: Path to input image for inference (required for test mode)
+- `--min_confidence`: Detection confidence threshold (default: 0.8)
+- `--save_overlay`: Save visualization with detected masks
+- `--output`: Custom output path for results
 
----
+### Evaluation
 
-## Contributing 🤝
+#### 1. Standard Evaluation
 
-Contributions are welcome!
-Open issues or submit pull requests to improve PrithviVision.
+Compute Average Precision (AP) on validation set:
 
----
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
+    --subset valid \
+    --weights /path/to/trained_model.h5 \
+    --output evaluation_results.csv
+```
 
-## Authors ✍️
+#### 2. Detailed Evaluation with Visualizations
 
-- [Shrikar Nakhye](https://www.linkedin.com/in/shrikar-n-053262188/) – [📧 Email](mailto:shrikar.nakhye@smail.inf.h-brs.de)
+```bash
+python3 samples/eval_ap.py --dataset /path/to/yolo_dataset \
+    --subset valid \
+    --weights /path/to/trained_model.h5 \
+    --output detailed_results.csv \
+    --save_overlays /path/to/overlay_output \
+    --iou 0.5 \
+    --limit 100 \
+    --min_confidence 0.7
+```
 
-- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) – [📧 Email](mailto:sai.ramamoorthy@smail.inf.h-brs.de)
-- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) – [📧 Email](mailto:kai.glasenapp@smail.inf.h-brs.de)
+**Evaluation Options:**
+- `--dataset`: Path to YOLO-format dataset (required)
+- `--subset`: Dataset subset to evaluate - `train` or `valid` (default: `valid`)
+- `--weights`: Path to trained model weights (required)
+- `--output`: CSV file for detailed results (default: `eval_results.csv`)
+- `--save_overlays`: Directory to save prediction overlay images
+- `--iou`: IoU threshold for AP calculation (default: 0.5)
+- `--limit`: Maximum number of images to evaluate
+- `--min_confidence`: Override model's detection confidence threshold
+- `--logs`: Custom logs directory (default: `../logs`)
 
----
+**Evaluation Outputs:**
+- **CSV Results**: Per-image metrics including ground truth count, predictions, and AP scores
+- **Overlay Images**: Visual comparison of predictions vs ground truth (if `--save_overlays` specified)
+- **Summary Statistics**: Mean AP across all evaluated images
 
-## Acknowledgments 🙏
+### Alternative Baseline Script
 
-This project was developed as part of the coursework for the DLRV – Deep Learning for Robot Vision class at Hochschule Bonn-Rhein-Sieg during Summer Semester 2025.
+For simpler training without advanced features, use the baseline script:
 
-Special thanks to:
+```bash
+# Training
+python3 samples/tree_segmentation.py --command train \
+    --dataset /path/to/yolo_dataset \
+    --weights coco \
+    --layers heads
 
-- [**Prof. Dr. Sebastian Houben**](sebastian.houben@h-brs.de)
-  For his guidance, valuable insights, and continuous support throughout the course and project.
+# Inference with overlay
+python3 samples/tree_segmentation.py --command test \
+    --image /path/to/image.jpg \
+    --weights /path/to/model.h5 \
+    --save_overlay \
+    --output /path/to/result.jpg
+```
