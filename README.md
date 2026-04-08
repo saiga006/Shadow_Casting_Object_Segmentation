@@ -36,14 +36,16 @@ Shadow_Casting_Object_Segmentation/
 │       └── tree_segmentation.py    # Baseline simplified training & inference script
 ├── outputs/              # Evaluation results, saved models, and metrics
 │   ├── maskrcnn_output/  # Mask R-CNN training metrics, GPU memory logs, and result plots
-│   ├── models/           # Saved U-Net model checkpoints (.pth)
+│   ├── models/           # Saved U-Net model checkpoints (.pth) and maskrcnn model checkpoint(.h5)
 │   └── plots/            # U-Net qualitative segmentation output images
 ├── src/                  # U-Net source code (forked from Prithvi Vision)
 │   ├── train_unet.py     # U-Net model training script
 │   ├── inference_unet.py # U-Net model inference script
 │   └── yolo_to_unet.py   # Utility to convert YOLO annotations to U-Net masks
 ├── .gitignore            # Git ignore definitions
+├── Project_Report_snakhy2s_sramam2s.pdf            # Project Report
 └── README.md             # Project overview and instructions
+
 ```
 
 ---
