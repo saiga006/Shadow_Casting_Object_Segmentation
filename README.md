@@ -76,7 +76,7 @@ Special thanks to:
 
 ---
 
-####  Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)
+####  For Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)
 ---
 
 # Aerial Segmentation with Mask R-CNN
@@ -185,7 +185,7 @@ python3 samples/tree_segmentation.py --command test --image /path/to/image.jpg -
 
 The model was trained on a custom dataset of aerial images with YOLO-style polygon annotations using two different backbone architectures. The training produced comprehensive metrics showing the model's learning progress over time.The below charts displays the training and validation losses, as well as the F1-score and IoU, providing a comprehensive view of the model's performance.
 
-### ResNet-50 Backbone (Recommended)
+### ResNet-50 Backbone
 
 ![Training Metrics - ResNet-50](outputs/maskrcnn_output/comprehensive_training_metrics.png)
 
@@ -196,7 +196,7 @@ The model was trained on a custom dataset of aerial images with YOLO-style polyg
 - **Training Time**: 29.5 seconds/epoch
 - **Final Training Loss**: 1.26
 
-### ResNet-101 Backbone (Higher Accuracy)
+### ResNet-101 Backbone
 
 ![Training Metrics - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/comprehensive_training_metrics.png)
 
