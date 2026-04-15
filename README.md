@@ -1,4 +1,4 @@
-# 🌍 Shadow Casting Object Aerial Segmentation
+# Shadow Casting Object Aerial Segmentation
 
 ## Overview 
 
@@ -49,16 +49,6 @@ Shadow_Casting_Object_Segmentation/
 ```
 ---
 
-## Authors 
-
-- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) for Mask-RCNN Model Training/Inference scripts and Report Generation.
-
-- [Shrikar Nakhye](mailto:shrikar.nakhye@smail.inf.h-brs.de) for Unet Model Training/Inference scripts and Report Generation.
-
-- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) for providing Bonn City Aerial Dataset.
-
----
-
 ## Acknowledgments 
 
 This project was developed as part of the coursework for the DLRV – Deep Learning for Robot Vision class at Hochschule Bonn-Rhein-Sieg during Summer Semester 2025.
@@ -68,9 +58,6 @@ Special thanks to:
 - [**Prof. Dr. Sebastian Houben**](sebastian.houben@h-brs.de)
   For his guidance, valuable insights, and continuous support throughout the course and project.
 
----
-
-####  For Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)
 ---
 
 # Aerial Segmentation with Mask R-CNN
@@ -108,6 +95,19 @@ The model was trained on a custom dataset of aerial images with YOLO-style polyg
 ![Inference Example - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/Figure_maskrcnn_inference.png)
 
 The above images demonstrate the model's inference capabilities on aerial tree imagery, showing detected instances with segmentation masks and bounding boxes. Both backbone architectures provide robust tree detection and segmentation performance, with ResNet-50 offering better computational efficiency and ResNet-101 providing higher model accuracy and classification.
+
+---
+
+## Authors 
+
+- [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) for Mask-RCNN Model Training/Inference scripts and Report Generation.
+
+- [Shrikar Nakhye](mailto:shrikar.nakhye@smail.inf.h-brs.de) for Unet Model Training/Inference scripts and Report Generation.
+  #####  _For Aerial Segmentation Using U-Net: Please refer the [Prithvi Vision Repo](https://github.com/ItsShriks/PrithviVision)_
+
+- [Kai Glasenapp](mailto:kai.glasenapp@smail.inf.h-brs.de) for providing Bonn City Aerial Dataset.
+
+---
 
 ## Environment Setup
 
