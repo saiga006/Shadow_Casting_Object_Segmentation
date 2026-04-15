@@ -1,21 +1,21 @@
 # 🌍 Shadow Casting Object Aerial Segmentation
 
-## Overview 🎯
+## Overview 
 
 This repository contains code and datasets related to shadow casting object segmentation. The project focuses on detecting and segmenting objects in images affected by shadows, a challenging task in remote sensing and urban scene understanding. The segmentation approach aims to improve accuracy in scenarios with significant shadow effects.
 
-The project combines **U-Net, YOLO, and Mask R-CNN** approaches to handle both **object detection** and **pixel-level segmentation**. The dataset is curated from **aerial images of Bonn city**, annotated in **YOLO format**.
+The project combines **U-Net, YOLO, and Mask R-CNN** approaches to handle both **object detection** and **pixel-level segmentation**. The dataset is curated from **aerial images of the city of Bonn**, annotated in **YOLO format**.
 
 
-## Features ✨
-- 📂 **YOLO-format dataset** prepared for aerial shadow segmentation.
-- 🧠 **Multiple models supported** – U-Net, YOLO, Mask R-CNN.
-- 🛠️ **Preprocessing & annotation utilities** for dataset preparation.
-- ⚡ **Modular** training and inference scripts.
+## Features 
+-  **YOLO-format dataset** prepared for aerial shadow segmentation.
+-  **Multiple models supported** – U-Net, YOLO, Mask R-CNN.
+-  **Preprocessing & annotation utilities** for dataset preparation.
+-  **Modular** training and inference scripts.
 
 ---
 
-## Repository Structure & Git History 📂
+## Repository Structure & Git History 
 
 **Version Control History:**
 This repository was initially forked from the [Matterport Mask R-CNN implementation](https://github.com/matterport/Mask_RCNN) and also forked the changes from the [Prithvi Vision](https://github.com/ItsShriks/PrithviVision) repo. Later changes were done in both branches, and then the changes of Prithvi Vision were rebased on top of the Mask R-CNN dev branch (maskrcnn_model) changes to form the current unified structure.
@@ -50,14 +50,14 @@ Shadow_Casting_Object_Segmentation/
 
 ---
 
-## Contributing 🤝
+## Contributing 
 
 Contributions are welcome!
 Open issues or submit pull requests to improve the Aerial Segmentation performance.
 
 ---
 
-## Authors ✍️
+## Authors 
 
 - [Sai Mukkundan](mailto:sai.ramamoorthy@smail.inf.h-brs.de) for Mask-RCNN Model Training/Inference scripts and Report Generation.
 
@@ -67,7 +67,7 @@ Open issues or submit pull requests to improve the Aerial Segmentation performan
 
 ---
 
-## Acknowledgments 🙏
+## Acknowledgments 
 
 This project was developed as part of the coursework for the DLRV – Deep Learning for Robot Vision class at Hochschule Bonn-Rhein-Sieg during Summer Semester 2025.
 
