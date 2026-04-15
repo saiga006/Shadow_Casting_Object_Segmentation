@@ -47,14 +47,6 @@ Shadow_Casting_Object_Segmentation/
 └── README.md             # Project overview and instructions
 
 ```
-
----
-
-## Contributing 
-
-Contributions are welcome!
-Open issues or submit pull requests to improve the Aerial Segmentation performance.
-
 ---
 
 ## Authors 
@@ -84,6 +76,38 @@ Special thanks to:
 # Aerial Segmentation with Mask R-CNN
 
 This project provides an implementation of Mask R-CNN for instance segmentation of trees in aerial imagery. It is built upon the [Matterport Mask R-CNN implementation](https://github.com/matterport/Mask_RCNN) and includes scripts for training, evaluation, and visualization.
+
+
+## Results
+
+The model was trained on a custom dataset of aerial images with YOLO-style polygon annotations using two different backbone architectures. The training produced comprehensive metrics showing the model's learning progress over time.The below charts displays the training and validation losses, as well as the F1-score and IoU, providing a comprehensive view of the model's performance.
+
+### ResNet-50 Backbone
+
+![Training Metrics - ResNet-50](outputs/maskrcnn_output/comprehensive_training_metrics.png)
+
+**Performance Summary:**
+- **Validation IoU**: 0.687
+- **Validation F1-Score**: 0.354  
+- **GPU Memory Usage**: 3.27 GB
+- **Training Time**: 29.5 seconds/epoch
+- **Final Training Loss**: 1.26
+
+### ResNet-101 Backbone
+
+![Training Metrics - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/comprehensive_training_metrics.png)
+
+**Performance Summary:**
+- **Higher model capacity** with deeper backbone architecture
+- **Increased GPU memory requirements** (~5.2 GB)
+- **Longer training time** but potentially better feature extraction
+- **Suitable for high-end GPUs** with sufficient memory
+
+### Inference Results
+
+![Inference Example - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/Figure_maskrcnn_inference.png)
+
+The above images demonstrate the model's inference capabilities on aerial tree imagery, showing detected instances with segmentation masks and bounding boxes. Both backbone architectures provide robust tree detection and segmentation performance, with ResNet-50 offering better computational efficiency and ResNet-101 providing higher model accuracy and classification.
 
 ## Environment Setup
 
@@ -182,37 +206,6 @@ python3 samples/tree_segmentation.py --command train --dataset /path/to/yolo_dat
 ```bash
 python3 samples/tree_segmentation.py --command test --image /path/to/image.jpg --weights /path/to/weights.h5 --save_overlay --output /path/to/output.jpg
 ```
-
-## Results
-
-The model was trained on a custom dataset of aerial images with YOLO-style polygon annotations using two different backbone architectures. The training produced comprehensive metrics showing the model's learning progress over time.The below charts displays the training and validation losses, as well as the F1-score and IoU, providing a comprehensive view of the model's performance.
-
-### ResNet-50 Backbone
-
-![Training Metrics - ResNet-50](outputs/maskrcnn_output/comprehensive_training_metrics.png)
-
-**Performance Summary:**
-- **Validation IoU**: 0.687
-- **Validation F1-Score**: 0.354  
-- **GPU Memory Usage**: 3.27 GB
-- **Training Time**: 29.5 seconds/epoch
-- **Final Training Loss**: 1.26
-
-### ResNet-101 Backbone
-
-![Training Metrics - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/comprehensive_training_metrics.png)
-
-**Performance Summary:**
-- **Higher model capacity** with deeper backbone architecture
-- **Increased GPU memory requirements** (~5.2 GB)
-- **Longer training time** but potentially better feature extraction
-- **Suitable for high-end GPUs** with sufficient memory
-
-### Inference Results
-
-![Inference Example - ResNet-101](outputs/maskrcnn_output/resnet-101_backbone_results/Figure_maskrcnn_inference.png)
-
-The above images demonstrate the model's inference capabilities on aerial tree imagery, showing detected instances with segmentation masks and bounding boxes. Both backbone architectures provide robust tree detection and segmentation performance, with ResNet-50 offering better computational efficiency and ResNet-101 providing higher model accuracy and classification.
 
 ## Getting Started
 
@@ -377,3 +370,10 @@ python3 samples/tree_segmentation.py --command test \
     --save_overlay \
     --output /path/to/result.jpg
 ```
+
+---
+
+## Contributing 
+
+Contributions are welcome!
+Open issues or submit pull requests to improve the Aerial Segmentation performance.
